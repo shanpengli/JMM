@@ -1929,16 +1929,450 @@ int GetE(
           }
       }
       
+      gsl_vector *pdim=gsl_vector_alloc(j_max);
+      gsl_vector_set(pdim,0,p01);
+      gsl_vector_set(pdim,1,p02);
+      
+      int loca=p01+p02;
       
       
-      
-      
+      /*Define a vector of # of covariates for all biomarkers; 
+      the current version can only allow two biomarkers*/
+      gsl_vector *pmax = gsl_vector_calloc(2);
+      gsl_vector_set(pmax, 0, p01);
+      gsl_vector_set(pmax, 1, p02);
+      int p_max = gsl_vector_max(pmax);
+      /* allocate space for estimated parameters */    
+      gsl_matrix *beta0 = gsl_matrix_alloc(j_max,p_max);
+      gsl_vector *beta1 = gsl_vector_alloc(j_max),
+                 *sigma = gsl_vector_alloc(j_max),
+                 *theta = gsl_vector_alloc(q_b),
+                 *sigmad = gsl_vector_alloc(k_max),
+                 *eta = gsl_vector_alloc(q_eta);
+        
+        double gamma;
+        
+        /* allocate space for pre parameters */            
+        gsl_matrix *prebeta0 = gsl_matrix_alloc(j_max,p_max);
+        gsl_vector *prebeta1 = gsl_vector_alloc(j_max),
+                   *presigma = gsl_vector_alloc(j_max),
+                   *pretheta = gsl_vector_alloc(q_b),
+                   *presigmad = gsl_vector_alloc(k_max),
+                   *preeta = gsl_vector_alloc(q_eta);
+          
+        gsl_matrix *prebtheta = gsl_matrix_alloc(q_b,k_max);
+          
+        double pregamma;   
+        
+        /* assign the start values of parameters */
+        
+        gsl_matrix_set(beta0,0,0,0);
+        gsl_matrix_set(beta0,1,0,0);
+        
+        gsl_vector_set(beta1,0,1);
+        gsl_vector_set(beta1,1,1.28);
+        
+        
+        gsl_vector_set(sigma,0,3.1);
+        gsl_vector_set(sigma,1,3.8);
+        
+        
+        gsl_vector_set(theta,0,15);
+        gsl_vector_set(theta,1,-0.1);
+        gsl_vector_set(theta,2,-6);
+        gsl_vector_set(theta,3,-0.1);
+        gsl_vector_set(theta,4,1.1);
+        gsl_vector_set(theta,5,0.1);
+        gsl_vector_set(theta,6,-0.24);
+        gsl_vector_set(theta,7,-0.4);
+        gsl_vector_set(theta,8,-1.6);
+        gsl_vector_set(theta,9,-0.1);
+        
+        gsl_vector_set(sigmad,0,8);
+        gsl_vector_set(sigmad,1,5);
+        
+        gsl_vector_set_zero(eta);
+        
+        gamma=0.3;
+        
+        const gsl_rng_type * T;
+        gsl_rng * r;
+        gsl_rng_env_setup();
+        T = gsl_rng_default;
+        r = gsl_rng_alloc (T);
+        
+        
+        gsl_bspline_workspace *bw=gsl_bspline_alloc(k_cubic,nbreak);
+        gsl_bspline_knots_uniform(tL,tU,bw);
+        gsl_vector *B_spl=gsl_vector_alloc(nbreak+k_cubic-2);
+        
+        
+        gsl_matrix *V=gsl_matrix_alloc(k_max,k_max);
+        gsl_vector *S=gsl_vector_alloc(q_b);
+        gsl_vector *work=gsl_vector_alloc(q_b);
+        gsl_matrix *bthetat=gsl_matrix_alloc(k_max,q_b);
+        gsl_matrix *hbtheta=gsl_matrix_alloc(q_b,k_max);
+        gsl_matrix *reta=gsl_matrix_alloc(q_b,q_b);
+        gsl_matrix *veta=gsl_matrix_alloc(q_b,q_b);
+        
+        int point,i,j,t,k,ni,iter,status,loc,p,q;
+        
+        for(i=0;i<C->size1;i++)
+        {
+          if(gsl_matrix_get(C,i,0)>tU) 
+          {
+            gsl_matrix_set(C,i,0,tU);	
+            gsl_matrix_set(C,i,1,0);
+          }
+          
+        }
+        
+        gsl_matrix * FH01 = gsl_matrix_alloc(2,n);         /* baseline hazard function for event risk */
+        
+        gsl_matrix_set_zero(FH01);
+        
+        
+        /* find # of events */
+        int u, v, a=0;
+        
+        for(j=0;j<n;j++)
+        {
+          u=0;
+          if(gsl_matrix_get(C,j,1)==1) 
+          {
+            if(a>=1)
+            {
+              for(t=0;t<a;t++)
+              {
+                if(gsl_matrix_get(FH01,0,t)==gsl_matrix_get(C,j,0))
+                {
+                  gsl_matrix_set(FH01,1,t,gsl_matrix_get(FH01,1,t)+1);
+                  u=1;
+                }
+              }
+              if(u==0)
+              {
+                t=-1;
+                
+                do
+                {
+                  t=t+1;
+                }while(t<=a-1 && gsl_matrix_get(FH01,0,t) < gsl_matrix_get(C,j,0));
+                
+                if(t==a)
+                {
+                  gsl_matrix_set(FH01,0,t,gsl_matrix_get(C,j,0));
+                  gsl_matrix_set(FH01,1,t,1);
+                }
+                
+                if(t<a)
+                {
+                  for(v=a-1;v>=t;v--)
+                  {
+                    gsl_matrix_set(FH01,0,v+1,gsl_matrix_get(FH01,0,v));
+                    gsl_matrix_set(FH01,1,v+1,gsl_matrix_get(FH01,1,v));
+                  }
+                  gsl_matrix_set(FH01,0,t,gsl_matrix_get(C,j,0));
+                  gsl_matrix_set(FH01,1,t,1);
+                }
+                
+                a=a+1;
+              }
+            }
+            
+            if(a==0)
+            {
+              gsl_matrix_set(FH01,0,0,gsl_matrix_get(C,j,0));
+              gsl_matrix_set(FH01,1,0,1);
+              a=a+1;
+            }
+          }
+        }
+        
+        
+        if(a==0) 
+        {
+          Rprintf("No failure time information for risk 1; Program exits\n");
+        }
+        
+        
+        gsl_matrix * H01 = gsl_matrix_alloc(3,a);                 /* baseline hazard function */
+        
+        for(i=0;i<3;i++)
+        {
+          if(i<=1)
+          {
+            for(j=0;j<a;j++)    gsl_matrix_set(H01,i,j, gsl_matrix_get(FH01,i,j));
+          }
+          if(i==2)   
+          {
+            for(j=0;j<a;j++)    gsl_matrix_set(H01,i,j,0.0001);
+          }
+        }
+        
+        
+        gsl_matrix * preH01 = gsl_matrix_alloc(3,a);               
+        
+        iter=0;
+        do
+        {
+          
+          iter=iter+1;
+          
+          /* store previous parameter estimates */
+          
+          gsl_matrix_memcpy(prebeta0,beta0);
+          gsl_vector_memcpy(prebeta1,beta1);
+          gsl_vector_memcpy(presigma,sigma);
+          gsl_vector_memcpy(pretheta,theta);
+          gsl_vector_memcpy(presigmad,sigmad);
+          gsl_vector_memcpy(preeta,eta);
+          gsl_matrix_memcpy(prebtheta,btheta);
+          gsl_matrix_memcpy(preH01,H01);
+          
+          pregamma=gamma;
+          
+          
+          /* run EM to get updated parameter estimates */
+          
+          status=EM(beta0,beta1,sigma,theta,sigmad,eta,btheta,H01,&gamma,pdim,
+                    Bio,C,M,bw,sigmau_inv, quadpoint, xs, ws);
+          
+          
+          if (trace) {
+            Rprintf("status=%d  iter=%d\n",status,iter);
+            
+            Rprintf("beta0 = \n");
+            for (j=0;j<j_max;j++)
+            {
+              for(i=0;i<p_max;i++)  Rprintf("%f     ", gsl_matrix_get(beta0,j,i));
+              Rprintf("\n");                     
+            }
+            
+            
+            Rprintf("beta1 = \n");
+            for (i=0;i<beta1->size;i++)
+            {
+              Rprintf("%f     ", gsl_vector_get(beta1,i)); 
+              
+            }
+            Rprintf("\n");
+            
+            
+            Rprintf("sigma = \n");
+            for (i=0;i<sigma->size;i++)
+            {
+              Rprintf("%f     ", gsl_vector_get(sigma,i)); 
+              
+            }
+            Rprintf("\n");
+            
+            
+            Rprintf("theta = \n");
+            for (i=0;i<theta->size;i++)
+            {
+              Rprintf("%f     ", gsl_vector_get(theta,i)); 
+              
+            }
+            Rprintf("\n");
+            
+            Rprintf("sigmad = \n");
+            for (i=0;i<sigmad->size;i++)
+            {
+              Rprintf("%f     ", gsl_vector_get(sigmad,i)); 
+              
+            }
+            Rprintf("\n");
+            
+            Rprintf("eta = \n");
+            for (i=0;i<eta->size;i++)
+            {
+              Rprintf("%f     ", gsl_vector_get(eta,i)); 
+              
+            }
+            Rprintf("\n");
+            
+            Rprintf("btheta = \n");
+            for(k=0;k<q_b;k++)
+            {
+              for(i=0;i<k_max;i++)   Rprintf("%f   ",gsl_matrix_get(btheta,k,i));
+              Rprintf("\n");
+            }
+            
+            
+            Rprintf("gamma = %f\n",gamma);
+            }
+          
+        }while(Diffn(prebeta0,beta0,prebeta1,beta1,presigma,sigma,pretheta,
+                     theta,preeta,eta,pregamma,gamma)==1 && status != 100 && 
+                     iter<maxiter);
+        
+        if(status==100) 
+        {
+          printf("program stops because of error\n");
+        }
+        
+        
+        if(iter==maxiter) 
+        {
+          printf("program stops because of nonconvergence\n");
+        }
+        
+        /** output the estimates  ***/
+        NumericMatrix beta0_matrix(j_max, p_max);
+        NumericVector beta1_estimate(beta1->size);
+        NumericVector sigma2_estimate(sigma->size);
+        NumericVector theta_estimate(theta->size);
+        NumericVector sigmad_estimate(sigmad->size);
+        NumericVector eta_estimate(eta->size);
+        NumericMatrix btheta_matrix(q_b, k_max);
+        NumericMatrix BaselineHazard(H01->size1, H01->size2);
+        double loglike = 0.0;
+        
+        gsl_matrix *FUNA=gsl_matrix_alloc(M->size,k_max);
+        NumericMatrix FUNA_matrix(FUNA->size1, FUNA->size2);
+        
+        if(status==1 && iter<maxiter)
+        {
+          
+          gsl_matrix_set_zero(V);
+          for(k=0;k<k_max;k++) gsl_matrix_set(V,k,k,gsl_vector_get(sigmad,k));
+          
+          TransM(btheta,bthetat);
+          MulMM(btheta,V,hbtheta);
+          MulMM(hbtheta,bthetat,reta);
+          
+          gsl_linalg_SV_decomp(reta,veta,S,work);
+          
+          for(k=0;k<k_max;k++)
+          {
+            gsl_vector_set(sigmad,k,gsl_vector_get(S,k));
+            
+            for(i=0;i<q_b;i++)
+              gsl_matrix_set(btheta,i,k,gsl_matrix_get(reta,i,k));
+          }
+          
+          for (i=0;i<j_max;i++) 
+          {
+            for (j=0;j<p_max;j++) 
+            {
+              beta0_matrix(i, j) = gsl_matrix_get(beta0, i, j);
+            }
+          }
+          
+          for (i=0;i<beta1->size;i++) beta1_estimate(i) = gsl_vector_get(beta1, i);
+          for (i=0;i<sigma->size;i++) sigma2_estimate(i) = gsl_vector_get(sigma, i);
+          for (i=0;i<theta->size;i++) theta_estimate(i) = gsl_vector_get(theta, i);
+          for (i=0;i<sigmad->size;i++) sigmad_estimate(i) = gsl_vector_get(sigmad, i);
+          for (i=0;i<eta->size;i++) eta_estimate(i) = gsl_vector_get(eta, i);
+          
+          for (i=0;i<q_b;i++) 
+          {
+            for (j=0;j<k_max;j++) 
+            {
+              btheta_matrix(i, j) = gsl_matrix_get(btheta, i, j);
+            }
+          }
+          
+          loglike = GetLogLike(beta0,beta1,theta,sigmad,eta,btheta,H01,sigma,gamma,
+                               pdim,Bio,C,M,bw,sigmau_inv, quadpoint, xs, ws);
+          
+          for (i=0;i<H01->size1;i++) 
+          {
+            for (j=0;j<H01->size2;j++) 
+            {
+              BaselineHazard(i, j) = gsl_matrix_get(H01, i, j);
+            }
+          }
+          
+          
+          gsl_matrix *FUNA2=gsl_matrix_alloc(M->size,((k_max+1)*k_max)/2);
+          gsl_matrix *FUNE=gsl_matrix_alloc(M->size,H01->size2);
+          gsl_matrix *FUNAE=gsl_matrix_alloc(M->size,H01->size2);
+          gsl_matrix *FUNA2E=gsl_matrix_alloc(M->size,H01->size2);
+          gsl_matrix *FUNAEV=gsl_matrix_alloc(M->size,H01->size2*k_max);
+          gsl_matrix *FUNA2EV=gsl_matrix_alloc(M->size,H01->size2*k_max);
+          
+          
+          GetE(FUNA,FUNA2,FUNE,FUNAE,FUNA2E,FUNAEV,FUNA2EV,beta0,beta1,sigma,
+               theta,sigmad,eta,btheta,H01,gamma,pdim,Bio,C,M,bw,sigmau_inv,quadpoint, xs, ws);  
+          
+          
+          
+          for (i=0;i<FUNA->size1;i++) 
+          {
+            for (j=0;j<FUNA->size2;j++) 
+            {
+              FUNA_matrix(i, j) = gsl_matrix_get(FUNA, i, j);
+            }
+          }
+          
+          
+          gsl_matrix_free(FUNA2); 
+          gsl_matrix_free(FUNE); 
+          gsl_matrix_free(FUNAE);
+          gsl_matrix_free(FUNA2E);
+          gsl_matrix_free(FUNAEV);
+          gsl_matrix_free(FUNA2EV);
+          
+          
+        }
+        
+        
+        Rcpp::List ret;
+        ret["beta0_matrix"] = beta0_matrix;
+        ret["beta1_estimate"] = beta1_estimate;
+        ret["sigma2_estimate"] = sigma2_estimate;
+        ret["theta_estimate"] = theta_estimate;
+        ret["sigmad_estimate"] = sigmad_estimate;
+        ret["eta_estimate"] = eta_estimate;
+        ret["btheta_matrix"] = btheta_matrix;
+        ret["BaselineHazard"] = BaselineHazard;
+        ret["FUNA_matrix"] = FUNA_matrix;
+        ret["iter"] = iter;
+        ret["loglike"] = loglike;
+        
+        
+        gsl_matrix_free(FUNA);
+        
+        gsl_matrix_free(FH01);
+        gsl_matrix_free(H01);
+        gsl_matrix_free(preH01);
+        
+        gsl_matrix_free(Bio);
+        gsl_matrix_free(C);
+        gsl_vector_free(M);
+        
+        gsl_matrix_free(beta0);
+        gsl_vector_free(beta1);
+        gsl_vector_free(sigma);
+        gsl_vector_free(theta);
+        gsl_vector_free(sigmad);
+        gsl_vector_free(eta);
+        gsl_matrix_free(btheta);
+        
+        gsl_matrix_free(prebeta0);
+        gsl_vector_free(prebeta1);
+        gsl_vector_free(presigma);
+        gsl_vector_free(pretheta);
+        gsl_vector_free(presigmad);
+        gsl_vector_free(preeta);
+        gsl_matrix_free(prebtheta);
+        
+        gsl_vector_free(B_spl);
+        gsl_vector_free(pdim);  
+        gsl_bspline_free(bw);
+        gsl_matrix_free(sigmau_inv);
+        
+        gsl_matrix_free(V);
+        gsl_vector_free(S);
+        gsl_vector_free(work);
+        gsl_matrix_free(bthetat);
+        gsl_matrix_free(hbtheta);
+        gsl_matrix_free(reta);
+        gsl_matrix_free(veta);
 
-
-
-
-  return 0;
-
+        return ret;
   }
 
 }
