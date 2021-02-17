@@ -138,14 +138,12 @@ Rcpp::List bootsdata_cmain(int n, int n1, double tL, double tU, int q_eta,
   
   Rcpp::List ret;
   
-  NumericMatrix C_matrix(BC->size1, BC->size2);
-  NumericVector m_vec(BM->size);
-  
   char namey[30];
   char namec[30];
   char namem[30];
   
-  for (boots=0;boots<nboots;boots++) {
+    do 
+    {
     
     gsl_vector_set_zero(BM);
     gsl_matrix_set_zero(BC);
@@ -172,6 +170,7 @@ Rcpp::List bootsdata_cmain(int n, int n1, double tL, double tU, int q_eta,
       loc+=ni;
     }
     
+
     gsl_matrix *BBio=gsl_matrix_alloc(loc,Bio->size2);
     
     for(i=0;i<loc;i++)  
@@ -181,6 +180,8 @@ Rcpp::List bootsdata_cmain(int n, int n1, double tL, double tU, int q_eta,
     
     /** output the estimates  ***/
     NumericMatrix Bio_matrix(BBio->size1, BBio->size2);
+    NumericMatrix C_matrix(BC->size1, BC->size2);
+    NumericVector m_vec(BM->size);
     
     for (i=0;i<BBio->size1;i++) 
     {
@@ -209,8 +210,9 @@ Rcpp::List bootsdata_cmain(int n, int n1, double tL, double tU, int q_eta,
     
     gsl_matrix_free(BBio);
     
+    boots+=1;
     
-  }
+  }while(boots<nboots);
   
   gsl_matrix_free(HBio);
   gsl_matrix_free(BC);

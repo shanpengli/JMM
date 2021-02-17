@@ -2148,11 +2148,11 @@ int GetE(
         // gamma=0.3;
         gsl_vector_set_zero(eta);
         
-        const gsl_rng_type * T;
-        gsl_rng * r;
-        gsl_rng_env_setup();
-        T = gsl_rng_default;
-        r = gsl_rng_alloc (T);
+        // const gsl_rng_type * T;
+        // gsl_rng * r;
+        // gsl_rng_env_setup();
+        // T = gsl_rng_default;
+        // r = gsl_rng_alloc (T);
         
         
         gsl_bspline_workspace *bw=gsl_bspline_alloc(k_cubic,nbreak);
