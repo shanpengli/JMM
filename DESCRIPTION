@@ -8,7 +8,7 @@ Maintainer: Shanpeng Li <lishanpeng0913@g.ucla.edu>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: GPL (>= 3)
-Imports: Rcpp,MASS,stats,utils,statmod
+Imports: Rcpp,MASS,stats,utils,statmod,parallel
 LinkingTo: Rcpp
 LazyData: true
 NeedsCompilation: yes

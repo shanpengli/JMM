@@ -164,7 +164,10 @@ namespace jmsplinespace {
                             std::string cdatanew, std::string sigmau_invnew,
                             std::string tbthetanew, 
                             std::vector<double> xs, 
-                            std::vector<double> ws);
+                            std::vector<double> ws,
+                            std::string beta0initnew, std::string beta1initnew,
+                            std::string sigmainitnew, std::string thetainitnew,
+                            std::string sigmadinitnew,double gamma);
 
 }
 

@@ -1762,17 +1762,35 @@ int GetE(
                               std::string cdatanew, std::string sigmau_invnew,
                               std::string tbthetanew, 
                               std::vector<double> xs, 
-                              std::vector<double> ws)
+                              std::vector<double> ws,
+                              std::string beta0initnew, std::string beta1initnew,
+                              std::string sigmainitnew, std::string thetainitnew,
+                              std::string sigmadinitnew,double gamma)
     {
       
       /* allocate space for data */
       int k_cubic = 4;
       int pt = p01+p02;
+      /*Define a vector of # of covariates for all biomarkers; 
+       the current version can only allow two biomarkers*/
+      gsl_vector *pmax = gsl_vector_calloc(2);
+      gsl_vector_set(pmax, 0, p01);
+      gsl_vector_set(pmax, 1, p02);
+      int p_max = gsl_vector_max(pmax);
+      
       gsl_matrix *sigmau_inv=gsl_matrix_alloc(nbreak+k_cubic-2,nbreak+k_cubic-2);
       gsl_vector *M= gsl_vector_alloc(n);                               /*# obs per subject */
       gsl_matrix *C = gsl_matrix_alloc(n,q_eta+2);                      /*data for event times */
       gsl_matrix *Bio = gsl_matrix_alloc(n_total,j_max+pt+1);           /*data for biomarkers */ 
       gsl_matrix *btheta = gsl_matrix_alloc(q_b,k_max);
+      
+      /* allocate space for estimated parameters */    
+      gsl_matrix *beta0 = gsl_matrix_alloc(j_max,p_max);
+      gsl_vector *beta1 = gsl_vector_alloc(j_max),
+        *sigma = gsl_vector_alloc(j_max),
+        *theta = gsl_vector_alloc(q_b),
+        *sigmad = gsl_vector_alloc(k_max),
+        *eta = gsl_vector_alloc(q_eta);
       
       /* read matrices */
       /* read Y matrix  */
@@ -1929,28 +1947,162 @@ int GetE(
           }
       }
       
+      /* read beta0 matrix  */
+      {
+        FILE * f = fopen(beta0initnew.c_str(), "r");
+        
+        if (f == NULL)
+        {
+          Rprintf("File %s does not exist.\n", beta0initnew.c_str());
+          return R_NilValue;
+        }
+        
+        
+        int nrows=0;
+        // Extract characters from file and store in character c
+        for (char c = fgetc(f); c != EOF; c = fgetc(f))
+          if (c == '\n')  nrows = nrows + 1;
+          nrows=nrows+1;
+          if (j_max == nrows)
+          {   rewind(f);
+            gsl_matrix_fscanf(f, beta0);
+            fclose(f);
+          }
+          else
+          {
+            Rprintf("Input oberservations is %d, but the number of rows in %s is %d",
+                    j_max,
+                    beta0initnew.c_str(),nrows);
+            fclose(f);
+            return R_NilValue;
+          }
+      }
+      
+      /* read beta1 vector  */
+      {
+        FILE * f = fopen(beta1initnew.c_str(), "r");
+        
+        if (f == NULL)
+        {
+          Rprintf("File %s does not exist.\n", beta1initnew.c_str());
+          return R_NilValue;
+        }
+        
+        
+        int nrows=0;
+        // Extract characters from file and store in character c
+        for (char c = fgetc(f); c != EOF; c = fgetc(f))
+          if (c == '\n')  nrows = nrows + 1;
+          nrows=nrows+1;
+          if (j_max==nrows)
+          {   rewind(f);
+            gsl_vector_fscanf(f, beta1);
+            fclose(f);
+          }
+          else
+          {
+            Rprintf("Input subjects is %d, but the number of rows in %s is %d",j_max,
+                    beta1initnew.c_str(),nrows);
+            fclose(f);
+            return R_NilValue;
+          }
+      }
+      
+      /* read sigma vector  */
+      {
+        FILE * f = fopen(sigmainitnew.c_str(), "r");
+        
+        if (f == NULL)
+        {
+          Rprintf("File %s does not exist.\n", sigmainitnew.c_str());
+          return R_NilValue;
+        }
+        
+        
+        int nrows=0;
+        // Extract characters from file and store in character c
+        for (char c = fgetc(f); c != EOF; c = fgetc(f))
+          if (c == '\n')  nrows = nrows + 1;
+          nrows=nrows+1;
+          if (j_max==nrows)
+          {   rewind(f);
+            gsl_vector_fscanf(f, sigma);
+            fclose(f);
+          }
+          else
+          {
+            Rprintf("Input subjects is %d, but the number of rows in %s is %d",j_max,
+                    sigmainitnew.c_str(),nrows);
+            fclose(f);
+            return R_NilValue;
+          }
+      }
+      
+      /* read theta vector  */
+      {
+        FILE * f = fopen(thetainitnew.c_str(), "r");
+        
+        if (f == NULL)
+        {
+          Rprintf("File %s does not exist.\n", thetainitnew.c_str());
+          return R_NilValue;
+        }
+        
+        
+        int nrows=0;
+        // Extract characters from file and store in character c
+        for (char c = fgetc(f); c != EOF; c = fgetc(f))
+          if (c == '\n')  nrows = nrows + 1;
+          nrows=nrows+1;
+          if (q_b==nrows)
+          {   rewind(f);
+            gsl_vector_fscanf(f, theta);
+            fclose(f);
+          }
+          else
+          {
+            Rprintf("Input subjects is %d, but the number of rows in %s is %d",q_b,
+                    thetainitnew.c_str(),nrows);
+            fclose(f);
+            return R_NilValue;
+          }
+      }
+      
+      /* read sigmad vector  */
+      {
+        FILE * f = fopen(sigmadinitnew.c_str(), "r");
+        
+        if (f == NULL)
+        {
+          Rprintf("File %s does not exist.\n", sigmadinitnew.c_str());
+          return R_NilValue;
+        }
+        
+        
+        int nrows=0;
+        // Extract characters from file and store in character c
+        for (char c = fgetc(f); c != EOF; c = fgetc(f))
+          if (c == '\n')  nrows = nrows + 1;
+          nrows=nrows+1;
+          if (k_max==nrows)
+          {   rewind(f);
+            gsl_vector_fscanf(f, sigmad);
+            fclose(f);
+          }
+          else
+          {
+            Rprintf("Input subjects is %d, but the number of rows in %s is %d",k_max,
+                    sigmadinitnew.c_str(),nrows);
+            fclose(f);
+            return R_NilValue;
+          }
+      }
+      
       gsl_vector *pdim=gsl_vector_alloc(j_max);
       gsl_vector_set(pdim,0,p01);
       gsl_vector_set(pdim,1,p02);
       
       int loca=p01+p02;
-      
-      
-      /*Define a vector of # of covariates for all biomarkers; 
-      the current version can only allow two biomarkers*/
-      gsl_vector *pmax = gsl_vector_calloc(2);
-      gsl_vector_set(pmax, 0, p01);
-      gsl_vector_set(pmax, 1, p02);
-      int p_max = gsl_vector_max(pmax);
-      /* allocate space for estimated parameters */    
-      gsl_matrix *beta0 = gsl_matrix_alloc(j_max,p_max);
-      gsl_vector *beta1 = gsl_vector_alloc(j_max),
-                 *sigma = gsl_vector_alloc(j_max),
-                 *theta = gsl_vector_alloc(q_b),
-                 *sigmad = gsl_vector_alloc(k_max),
-                 *eta = gsl_vector_alloc(q_eta);
-        
-        double gamma;
         
         /* allocate space for pre parameters */            
         gsl_matrix *prebeta0 = gsl_matrix_alloc(j_max,p_max);
@@ -1964,36 +2116,37 @@ int GetE(
           
         double pregamma;   
         
-        /* assign the start values of parameters */
-        
-        gsl_matrix_set(beta0,0,0,0);
-        gsl_matrix_set(beta0,1,0,0);
-        
-        gsl_vector_set(beta1,0,1);
-        gsl_vector_set(beta1,1,1.28);
-        
-        
-        gsl_vector_set(sigma,0,3.1);
-        gsl_vector_set(sigma,1,3.8);
-        
-        
-        gsl_vector_set(theta,0,15);
-        gsl_vector_set(theta,1,-0.1);
-        gsl_vector_set(theta,2,-6);
-        gsl_vector_set(theta,3,-0.1);
-        gsl_vector_set(theta,4,1.1);
-        gsl_vector_set(theta,5,0.1);
-        gsl_vector_set(theta,6,-0.24);
-        gsl_vector_set(theta,7,-0.4);
-        gsl_vector_set(theta,8,-1.6);
-        gsl_vector_set(theta,9,-0.1);
-        
-        gsl_vector_set(sigmad,0,8);
-        gsl_vector_set(sigmad,1,5);
-        
+        // /* assign the start values of parameters */
+        // 
+        // gsl_matrix_set(beta0,0,0,0);
+        // gsl_matrix_set(beta0,1,0,0);
+        // 
+        // gsl_vector_set(beta1,0,1);
+        // gsl_vector_set(beta1,1,1.28);
+        // 
+        // 
+        // gsl_vector_set(sigma,0,3.1);
+        // gsl_vector_set(sigma,1,3.8);
+        // 
+        // 
+        // gsl_vector_set(theta,0,15);
+        // gsl_vector_set(theta,1,-0.1);
+        // gsl_vector_set(theta,2,-6);
+        // gsl_vector_set(theta,3,-0.1);
+        // gsl_vector_set(theta,4,1.1);
+        // gsl_vector_set(theta,5,0.1);
+        // gsl_vector_set(theta,6,-0.24);
+        // gsl_vector_set(theta,7,-0.4);
+        // gsl_vector_set(theta,8,-1.6);
+        // gsl_vector_set(theta,9,-0.1);
+        // 
+        // gsl_vector_set(sigmad,0,8);
+        // gsl_vector_set(sigmad,1,5);
+        // 
+        // gsl_vector_set_zero(eta);
+        // 
+        // gamma=0.3;
         gsl_vector_set_zero(eta);
-        
-        gamma=0.3;
         
         const gsl_rng_type * T;
         gsl_rng * r;
@@ -2219,6 +2372,9 @@ int GetE(
         }
         
         /** output the estimates  ***/
+        NumericMatrix Bio_matrix(Bio->size1, Bio->size2);
+        NumericMatrix C_matrix(C->size1, C->size2);
+        NumericVector m_vec(M->size);
         NumericMatrix beta0_matrix(j_max, p_max);
         NumericVector beta1_estimate(beta1->size);
         NumericVector sigma2_estimate(sigma->size);
@@ -2231,6 +2387,23 @@ int GetE(
         
         gsl_matrix *FUNA=gsl_matrix_alloc(M->size,k_max);
         NumericMatrix FUNA_matrix(FUNA->size1, FUNA->size2);
+        
+        for (i=0;i<Bio->size1;i++) 
+        {
+          for (j=0;j<Bio->size2;j++) 
+          {
+            Bio_matrix(i, j) = gsl_matrix_get(Bio, i, j);
+          }
+        }
+        
+        for (i=0;i<C->size1;i++) 
+        {
+          for (j=0;j<C->size2;j++) 
+          {
+            C_matrix(i, j) = gsl_matrix_get(C, i, j);
+          }
+        }
+        for (i=0;i<M->size;i++) m_vec(i) = gsl_vector_get(M, i);
         
         if(status==1 && iter<maxiter)
         {
@@ -2318,8 +2491,18 @@ int GetE(
           
         }
         
+        int TotalPara = 0;
+        TotalPara = (beta0->size1)*(beta0->size2) + beta1->size + sigma->size +
+          theta->size + sigmad->size + eta->size + (btheta->size1)*(btheta->size2);
+        
+        double AIC = 0.0;
+        
+        AIC = 2*(TotalPara - loglike);
         
         Rcpp::List ret;
+        ret["ydata"] = Bio_matrix;
+        ret["cdata"] = C_matrix;
+        ret["N1"] = m_vec;
         ret["beta0_matrix"] = beta0_matrix;
         ret["beta1_estimate"] = beta1_estimate;
         ret["sigma2_estimate"] = sigma2_estimate;
@@ -2327,10 +2510,13 @@ int GetE(
         ret["sigmad_estimate"] = sigmad_estimate;
         ret["eta_estimate"] = eta_estimate;
         ret["btheta_matrix"] = btheta_matrix;
+        ret["gamma"] = gamma;
         ret["BaselineHazard"] = BaselineHazard;
         ret["FUNA_matrix"] = FUNA_matrix;
         ret["iter"] = iter;
         ret["loglike"] = loglike;
+        ret["AIC"] = AIC;
+        ret["TotalPara"] = TotalPara;
         
         
         gsl_matrix_free(FUNA);

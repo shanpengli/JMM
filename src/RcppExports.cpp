@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // jmspline_main
-Rcpp::List jmspline_main(SEXP n, SEXP n_total, SEXP tL, SEXP tU, SEXP p01, SEXP p02, SEXP q_b, SEXP q_eta, SEXP j_max, SEXP t_max, SEXP nbreak, SEXP k_max, SEXP quadpoint, SEXP maxiter, SEXP trace, SEXP ydatanew, SEXP mdatanew, SEXP cdatanew, SEXP sigmau_invnew, SEXP tbthetanew, SEXP xs, SEXP ws);
-RcppExport SEXP _JMM_jmspline_main(SEXP nSEXP, SEXP n_totalSEXP, SEXP tLSEXP, SEXP tUSEXP, SEXP p01SEXP, SEXP p02SEXP, SEXP q_bSEXP, SEXP q_etaSEXP, SEXP j_maxSEXP, SEXP t_maxSEXP, SEXP nbreakSEXP, SEXP k_maxSEXP, SEXP quadpointSEXP, SEXP maxiterSEXP, SEXP traceSEXP, SEXP ydatanewSEXP, SEXP mdatanewSEXP, SEXP cdatanewSEXP, SEXP sigmau_invnewSEXP, SEXP tbthetanewSEXP, SEXP xsSEXP, SEXP wsSEXP) {
+Rcpp::List jmspline_main(SEXP n, SEXP n_total, SEXP tL, SEXP tU, SEXP p01, SEXP p02, SEXP q_b, SEXP q_eta, SEXP j_max, SEXP t_max, SEXP nbreak, SEXP k_max, SEXP quadpoint, SEXP maxiter, SEXP trace, SEXP ydatanew, SEXP mdatanew, SEXP cdatanew, SEXP sigmau_invnew, SEXP tbthetanew, SEXP xs, SEXP ws, SEXP beta0initnew, SEXP beta1initnew, SEXP sigmainitnew, SEXP thetainitnew, SEXP sigmadinitnew, SEXP gammainit);
+RcppExport SEXP _JMM_jmspline_main(SEXP nSEXP, SEXP n_totalSEXP, SEXP tLSEXP, SEXP tUSEXP, SEXP p01SEXP, SEXP p02SEXP, SEXP q_bSEXP, SEXP q_etaSEXP, SEXP j_maxSEXP, SEXP t_maxSEXP, SEXP nbreakSEXP, SEXP k_maxSEXP, SEXP quadpointSEXP, SEXP maxiterSEXP, SEXP traceSEXP, SEXP ydatanewSEXP, SEXP mdatanewSEXP, SEXP cdatanewSEXP, SEXP sigmau_invnewSEXP, SEXP tbthetanewSEXP, SEXP xsSEXP, SEXP wsSEXP, SEXP beta0initnewSEXP, SEXP beta1initnewSEXP, SEXP sigmainitnewSEXP, SEXP thetainitnewSEXP, SEXP sigmadinitnewSEXP, SEXP gammainitSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -33,13 +33,43 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type tbthetanew(tbthetanewSEXP);
     Rcpp::traits::input_parameter< SEXP >::type xs(xsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type ws(wsSEXP);
-    rcpp_result_gen = Rcpp::wrap(jmspline_main(n, n_total, tL, tU, p01, p02, q_b, q_eta, j_max, t_max, nbreak, k_max, quadpoint, maxiter, trace, ydatanew, mdatanew, cdatanew, sigmau_invnew, tbthetanew, xs, ws));
+    Rcpp::traits::input_parameter< SEXP >::type beta0initnew(beta0initnewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type beta1initnew(beta1initnewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type sigmainitnew(sigmainitnewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type thetainitnew(thetainitnewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type sigmadinitnew(sigmadinitnewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type gammainit(gammainitSEXP);
+    rcpp_result_gen = Rcpp::wrap(jmspline_main(n, n_total, tL, tU, p01, p02, q_b, q_eta, j_max, t_max, nbreak, k_max, quadpoint, maxiter, trace, ydatanew, mdatanew, cdatanew, sigmau_invnew, tbthetanew, xs, ws, beta0initnew, beta1initnew, sigmainitnew, thetainitnew, sigmadinitnew, gammainit));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bootsdata_main
+Rcpp::List bootsdata_main(SEXP n, SEXP n1, SEXP tL, SEXP tU, SEXP q_eta, SEXP j_max, SEXP p01, SEXP p02, SEXP t_max, SEXP ydatanew, SEXP cdatanew, SEXP mdatanew, SEXP nboots);
+RcppExport SEXP _JMM_bootsdata_main(SEXP nSEXP, SEXP n1SEXP, SEXP tLSEXP, SEXP tUSEXP, SEXP q_etaSEXP, SEXP j_maxSEXP, SEXP p01SEXP, SEXP p02SEXP, SEXP t_maxSEXP, SEXP ydatanewSEXP, SEXP cdatanewSEXP, SEXP mdatanewSEXP, SEXP nbootsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type n(nSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type n1(n1SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tL(tLSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tU(tUSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type q_eta(q_etaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type j_max(j_maxSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type p01(p01SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type p02(p02SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type t_max(t_maxSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type ydatanew(ydatanewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type cdatanew(cdatanewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type mdatanew(mdatanewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type nboots(nbootsSEXP);
+    rcpp_result_gen = Rcpp::wrap(bootsdata_main(n, n1, tL, tU, q_eta, j_max, p01, p02, t_max, ydatanew, cdatanew, mdatanew, nboots));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_JMM_jmspline_main", (DL_FUNC) &_JMM_jmspline_main, 22},
+    {"_JMM_jmspline_main", (DL_FUNC) &_JMM_jmspline_main, 28},
+    {"_JMM_bootsdata_main", (DL_FUNC) &_JMM_bootsdata_main, 13},
     {NULL, NULL, 0}
 };
 

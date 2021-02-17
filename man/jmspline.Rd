@@ -19,7 +19,13 @@ jmspline(
   k_max = 2,
   quadpoint = 10,
   maxiter = 2500,
-  do.trace = FALSE
+  do.trace = FALSE,
+  beta0init = NULL,
+  beta1init = NULL,
+  sigmainit = NULL,
+  thetainit = NULL,
+  sigmadinit = NULL,
+  gammainit = NULL
 )
 }
 \arguments{
@@ -53,6 +59,18 @@ Each subject has one data entry.}
 \item{maxiter}{The maximum number of iterations for EM process.}
 
 \item{do.trace}{A logic value to control the iterated results to be printed. Default is FALSE.}
+
+\item{beta0init}{Initial values of beta0.}
+
+\item{beta1init}{Initial values of beta1.}
+
+\item{sigmainit}{Initial values of sigma^2.}
+
+\item{thetainit}{Initial values of theta.}
+
+\item{sigmadinit}{Initial values of sigmad.}
+
+\item{gammainit}{Initial values of gamma.}
 }
 \description{
 Joint modeling of longitudinal continuous and survival data
