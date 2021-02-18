@@ -51,7 +51,8 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
   
   ## Allocate a matrix for bootstrap sample estimates
   ncolM <- j_max*p_max + 2*j_max + q_b + k_max + q_eta + k_max*q_b + 1
-  ParaMatrix <- matrix(0, nrow = nboots, ncol = ncolM) 
+  ParaMatrix <- matrix(0, nrow = nboots, ncol = ncolM)
+  ParaMatrix <- as.data.frame(ParaMatrix)
   
   ## Initialize the parameter estimates
   tbeta0 <- as.data.frame(matrix(c(-0.01, -0.02), nrow = 2, ncol = 1))
@@ -100,43 +101,51 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
             for (t in 1:j_max) {
               for (u in 1:p_max) {
                 ParaMatrix[i, pp] = beta0[t, u]
+                if (i == 1) colnames(ParaMatrix)[pp] <- paste0("beta0_", t, u)
                 pp = pp+1
               }
             }
             
             for (t in 1:j_max) {
               ParaMatrix[i, pp] = beta1[t]
+              if (i == 1) colnames(ParaMatrix)[pp] <- paste0("beta1_", t)
               pp = pp+1
             }
             
             for (t in 1:j_max) {
               ParaMatrix[i, pp] = sigma2[t]
+              if (i == 1) colnames(ParaMatrix)[pp] <- paste0("sigma2_", t)
               pp = pp+1
             }
             
             for (t in 1:q_b) {
               ParaMatrix[i, pp] = theta[t]
+              if (i == 1) colnames(ParaMatrix)[pp] <- paste0("theta_", t)
               pp = pp+1
             }
             
             for (t in 1:k_max) {
               ParaMatrix[i, pp] = sigmad[t]
+              if (i == 1) colnames(ParaMatrix)[pp] <- paste0("sigmad_", t)
               pp = pp+1
             }
             
             for (t in 1:q_eta) {
               ParaMatrix[i, pp] = eta[t]
+              if (i == 1) colnames(ParaMatrix)[pp] <- paste0("eta_", t)
               pp = pp+1
             }
             
             for (t in 1:k_max) {
               for (u in 1:q_b) {
                 ParaMatrix[i, pp] = btheta[u, t]
+                if (i == 1) colnames(ParaMatrix)[pp] <- paste0("btheta_", u, t)
                 pp = pp+1
               }
             }
             
             ParaMatrix[i, pp] = gamma
+            if (i == 1) colnames(ParaMatrix)[pp] <- "gamma"
             
             if (print.para == TRUE) {
               print(ParaMatrix[i, ])
@@ -145,12 +154,6 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
       }
     }
     return(ParaMatrix)
-  } else  {
-    ParaMatrixRaw <- parallel::mclapply(1:nboots, bootsfit, mc.cores = ncores)
-    
-    return(ParaMatrixRaw)
-  }
-  
-  
+  } 
   
 }
