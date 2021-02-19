@@ -64,12 +64,16 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
   tsigmad <- as.data.frame(c(10.8, 6.4))
   tgamma <- 0.26
   
-  
-  Realboot <- 0
+  if (ncores<1 || ncores > nboots) {
+    stop("The specification of number of cores for parallel computation is not appropriate. 
+         Please try another number.")
+  }
   
   if (ncores == 1)
   {
+    Realboot <- 0
     for (i in 1:Fnboots) {
+      writeLines(paste0("Try ", i, " th sample now!"))
       bootsydata <- matrix(unlist(Data[1+(i-1)*3]), ncol = nycol)
       bootsydata <- as.data.frame(bootsydata)
       bootscdata <- matrix(unlist(Data[2+(i-1)*3]), ncol = nccol)
@@ -89,7 +93,7 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
         ParaMatrix[i, ] <- NA
       } else {
         Realboot <- Realboot + 1
-        writeLines(paste0(Realboot, " th sample is done!"))
+        writeLines(paste0(Realboot, " th sample's parameter estimates is collected!"))
         beta0 <- fit$beta0_matrix
         beta1 <- fit$beta1_estimate
         sigma2 <- fit$sigma2_estimate
@@ -159,7 +163,56 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
       
     }
     ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ]
-    return(ParaMatrix)
-  } 
+    
+  } else {
+    ParaMatrixRaw <- parallel::mclapply(1:nboots, bootsfit, Data = Data, 
+                                        nycol = nycol, nccol = nccol, 
+                                        sigmau_inv = sigmau_inv, 
+                                        tbtheta = tbtheta, tL = tL, tU = tU,
+                                        nbreak = nbreak, p01 = p01, p02 = p02, 
+                                        j_max = j_max,
+                                        k_max = k_max, quadpoint = quadpoint, 
+                                        maxiter = maxiter,
+                                        beta0init = tbeta0, beta1init = tbeta1,
+                                        sigmainit = tsigma2, thetainit = ttheta, 
+                                        sigmadinit = tsigmad,
+                                        gammainit = tgamma, mc.cores = ncores)
+    
+    ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = fit$TotalPara))
+    ParaMatrix <- as.data.frame(ParaMatrix[complete.cases(ParaMatrix), ])
+    
+    FrowPara <- nrow(ParaMatrix)
+    u <- FrowPara
+    t <- nboots
+    
+    while (u < nboots && t < Fnboots) {
+      nncores <- min((nboots - u), ncores)
+      ParaMatrixRaw <- parallel::mclapply((t+1):(t + nboots - u), bootsfit, 
+                                          Data = Data, 
+                                          nycol = nycol, nccol = nccol, 
+                                          sigmau_inv = sigmau_inv, 
+                                          tbtheta = tbtheta, tL = tL, tU = tU,
+                                          nbreak = nbreak, p01 = p01, p02 = p02, 
+                                          j_max = j_max,
+                                          k_max = k_max, quadpoint = quadpoint, 
+                                          maxiter = maxiter,
+                                          beta0init = tbeta0, beta1init = tbeta1,
+                                          sigmainit = tsigma2, thetainit = ttheta, 
+                                          sigmadinit = tsigmad,
+                                          gammainit = tgamma, mc.cores = nncores)
+      
+      SubParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = fit$TotalPara))
+      SubParaMatrix <- as.data.frame(SubParaMatrix[complete.cases(SubParaMatrix), ])
+      
+      FrowPara <- nrow(SubParaMatrix)
+      u <- u + FrowPara
+      t <- t + nboots - u
+      
+      ParaMatrix <- rbind(ParaMatrix, SubParaMatrix)
+      
+    }
+    
+  }
+  return(ParaMatrix)
   
 }

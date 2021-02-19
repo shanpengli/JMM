@@ -1,6 +1,13 @@
 ##' @export
 ##'
-bootsfit <- function(i) {
+bootsfit <- function(i, Data = Data, nycol = nycol, nccol = nccol, 
+                     sigmau_inv = sigmau_inv, tbtheta = tbtheta, tL = tL, tU = tU,
+                     nbreak = nbreak, p01 = p01, p02 = p02, j_max = j_max,
+                     k_max = k_max, quadpoint = quadpoint, maxiter = maxiter,
+                     beta0init = tbeta0, beta1init = tbeta1,
+                     sigmainit = tsigma2, thetainit = ttheta, 
+                     sigmadinit = tsigmad,
+                     gammainit = tgamma) {
   coef <- vector()
   writeLines(paste0("Running ", i, " th sample!"))
   bootsydata <- matrix(unlist(Data[1+(i-1)*3]), ncol = nycol)
@@ -10,15 +17,23 @@ bootsfit <- function(i) {
   bootsmdata <- matrix(unlist(Data[3*i]), ncol = 1)
   bootsmdata <- as.data.frame(bootsmdata)
   
-  fit <- try(jmspline(ydata = bootsydata, cdata = bootscdata, mdata = bootsmdata,
+  p_max <- max(p01, p02)
+  q_b <- 4 + nbreak - 2
+  cdim <- dim(bootscdata)
+  
+  q_eta = cdim[2] - 2
+  
+  fit <- jmspline(ydata = bootsydata, cdata = bootscdata, mdata = bootsmdata,
                       sigmau_inv = sigmau_inv, tbtheta = tbtheta, tL = tL, tU = tU,
                       nbreak = nbreak, p01 = p01, p02 = p02, j_max = j_max,
                       k_max = k_max, quadpoint = quadpoint, maxiter = maxiter,
                       do.trace = FALSE, beta0init = tbeta0, beta1init = tbeta1,
                       sigmainit = tsigma2, thetainit = ttheta, sigmadinit = tsigmad,
-                      gammainit = tgamma), silent = TRUE)
+                      gammainit = tgamma)
   
-  if ('try-error' %in% class(fit)) {
+  if (fit$iter == maxiter) {
+    totalp <- fit$TotalPara
+    coef <- rep(NA, totalp+1)
     return(coef)
   } else {
     beta0 <- fit$beta0_matrix
