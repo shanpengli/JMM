@@ -51,11 +51,6 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
   nycol <- dim(object$ydata)[2]
   nccol <- dim(object$cdata)[2]
   
-  ## Allocate a matrix for bootstrap sample estimates
-  ncolM <- j_max*p_max + 2*j_max + q_b + k_max + q_eta + k_max*q_b + 1
-  ParaMatrix <- matrix(0, nrow = Fnboots, ncol = ncolM)
-  ParaMatrix <- as.data.frame(ParaMatrix)
-  
   ## Initialize the parameter estimates
   tbeta0 <- as.data.frame(matrix(c(-0.01, -0.02), nrow = 2, ncol = 1))
   tbeta1 <- as.data.frame(c(1, 1.26))
@@ -71,6 +66,10 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
   
   if (ncores == 1)
   {
+    ## Allocate a matrix for bootstrap sample estimates
+    ncolM <- fit$TotalPara + 1
+    ParaMatrix <- matrix(NA, nrow = Fnboots, ncol = ncolM)
+    ParaMatrix <- as.data.frame(ParaMatrix)
     Realboot <- 0
     for (i in 1:Fnboots) {
       writeLines(paste0("Try ", i, " th sample now!"))
@@ -178,7 +177,7 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
                                         sigmadinit = tsigmad,
                                         gammainit = tgamma, mc.cores = ncores)
     
-    ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = fit$TotalPara))
+    ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (fit$TotalPara + 1)))
     ParaMatrix <- as.data.frame(ParaMatrix[complete.cases(ParaMatrix), ])
     
     FrowPara <- nrow(ParaMatrix)
@@ -201,7 +200,7 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
                                           sigmadinit = tsigmad,
                                           gammainit = tgamma, mc.cores = nncores)
       
-      SubParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = fit$TotalPara))
+      SubParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (fit$TotalPara + 1)))
       SubParaMatrix <- as.data.frame(SubParaMatrix[complete.cases(SubParaMatrix), ])
       
       FrowPara <- nrow(SubParaMatrix)
@@ -213,6 +212,7 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
     }
     
   }
+  
   return(ParaMatrix)
   
 }
