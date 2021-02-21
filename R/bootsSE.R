@@ -1,7 +1,16 @@
+##' @title Standard error estimates by bootstrap sampling
+##' @param object an object inheriting from class JMM.
+##' @param nboots number of bootstrap samples for standard error estimation. 
+##' Default is 100.
+##' @param print.bootspara logical; if TRUE a matrix of parameter estimates from 
+##' all bootstrap samples will be returned.
+##' @param maxiter number of iterations for EM algorithm. Default is 1000.
+##' @param ncores number of cores to proceed parallel computation.
+##' @param quadpoint number of Gauss-Hermite quadrature points used for numerical integration. 
 ##' @export
 ##'
 
-bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
+bootsSE <- function(object, nboots = 100, print.bootspara = TRUE, maxiter = 1000,
                       ncores = 2, quadpoint = 10) {
   if (!inherits(object, "JMM"))
     stop("Use only with 'JMM' objects.\n")
@@ -153,15 +162,12 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
         ParaMatrix[i, pp] = gamma
         colnames(ParaMatrix)[pp] <- "gamma"
         
-        if (print.para == TRUE) {
-          print(ParaMatrix[i, ])
-        }
       }
       
       if (Realboot == nboots) break
       
     }
-    ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ]
+    ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ] 
     
   } else {
     ParaMatrixRaw <- parallel::mclapply(1:nboots, bootsfit, Data = Data, 
@@ -177,8 +183,8 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
                                         sigmadinit = tsigmad,
                                         gammainit = tgamma, mc.cores = ncores)
     
-    ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (fit$TotalPara + 1)))
-    ParaMatrix <- as.data.frame(ParaMatrix[complete.cases(ParaMatrix), ])
+    ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (object$TotalPara + 1)))
+    ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ]
     
     FrowPara <- nrow(ParaMatrix)
     u <- FrowPara
@@ -200,19 +206,164 @@ bootsSE <- function(object, nboots = 100, print.para = FALSE, maxiter = 1000,
                                           sigmadinit = tsigmad,
                                           gammainit = tgamma, mc.cores = nncores)
       
-      SubParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (fit$TotalPara + 1)))
-      SubParaMatrix <- as.data.frame(SubParaMatrix[complete.cases(SubParaMatrix), ])
+      SubParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (object$TotalPara + 1)))
       
-      FrowPara <- nrow(SubParaMatrix)
-      u <- u + FrowPara
-      t <- t + nboots - u
-      
-      ParaMatrix <- rbind(ParaMatrix, SubParaMatrix)
-      
+      if (sum(is.na(SubParaMatrix)) == nrow(SubParaMatrix)*(object$TotalPara + 1)) {
+        FrowPara <- 0
+        u <- u + FrowPara
+        t <- t + nboots - u
+      } else if (nrow(SubParaMatrix) == 1) {
+        FrowPara <- 1
+        u <- u + FrowPara
+        t <- t + nboots - u
+        ParaMatrix <- rbind(ParaMatrix, SubParaMatrix)
+      } else {
+        SubParaMatrix <- SubParaMatrix[complete.cases(SubParaMatrix), ]
+        FrowPara <- nrow(SubParaMatrix)
+        u <- u + FrowPara
+        t <- t + nboots - u
+        ParaMatrix <- rbind(ParaMatrix, SubParaMatrix)
+      }
     }
+    ParaMatrix <- as.data.frame(ParaMatrix)
+    
+    ## name the parameters
+    pp = 1
+    for (t in 1:j_max) {
+      for (u in 1:p_max) {
+        colnames(ParaMatrix)[pp] <- paste0("beta0_", t, u)
+        pp = pp+1
+      }
+    }
+    
+    for (t in 1:j_max) {
+      colnames(ParaMatrix)[pp] <- paste0("beta1_", t)
+      pp = pp+1
+    }
+    
+    for (t in 1:j_max) {
+      colnames(ParaMatrix)[pp] <- paste0("sigma2_", t)
+      pp = pp+1
+    }
+    
+    for (t in 1:q_b) {
+      colnames(ParaMatrix)[pp] <- paste0("theta_", t)
+      pp = pp+1
+    }
+    
+    for (t in 1:k_max) {
+      colnames(ParaMatrix)[pp] <- paste0("sigmad_", t)
+      pp = pp+1
+    }
+    
+    for (t in 1:q_eta) {
+      colnames(ParaMatrix)[pp] <- paste0("eta_", t)
+      pp = pp+1
+    }
+    
+    for (t in 1:k_max) {
+      for (u in 1:q_b) {
+        colnames(ParaMatrix)[pp] <- paste0("btheta_", u, t)
+        pp = pp+1
+      }
+    }
+    colnames(ParaMatrix)[pp] <- "gamma"
     
   }
   
-  return(ParaMatrix)
+  
+  ##standard error:
+  SEpara <- matrix(sapply(ParaMatrix[, c(1:(j_max*p_max), (j_max*p_max + 2):(j_max*p_max + j_max),
+                                   (j_max*p_max + j_max*2 + q_b + k_max + 1):
+                                     (j_max*p_max + j_max*2 + q_b + k_max + q_eta), 
+                                   ncol(ParaMatrix))], sd, 2), nrow = 1)
+  ##log standard error
+  SElogpara <- vector()
+  index <- c((j_max*p_max+j_max+1):(j_max*p_max+2*j_max), 
+             (j_max*p_max+2*j_max+q_b+1):(j_max*p_max+2*j_max+q_b+k_max))
+  count <- 1
+  for (i in index) {
+    SElogpara[count] <- sd(log(ParaMatrix[, i]))
+    count <- count + 1
+  }
+  SElogpara <- matrix(SElogpara, nrow = 1)
+  
+  Table2 <- as.data.frame(matrix(0, nrow = (j_max*p_max + (j_max-1) + j_max + k_max + q_eta + 1), 
+                                 ncol = 5))
+  rownames(Table2) <- colnames(ParaMatrix)[c(1:(j_max*p_max), (j_max*p_max + 2):(j_max*p_max + j_max),
+                                       (j_max*p_max + j_max + 1):(j_max*p_max + j_max*2),
+                                       (j_max*p_max + j_max*2 + q_b + 1):
+                                         (j_max*p_max + j_max*2 + q_b + k_max),
+                                       (j_max*p_max + j_max*2 + q_b + k_max + 1):
+                                         (j_max*p_max + j_max*2 + q_b + k_max + q_eta), 
+                                       ncol(ParaMatrix))]
+  pp <- 1
+  for (t in 1:j_max) {
+    for (u in 1:p_max) {
+      Table2[pp, 1] = object$beta0_matrix[t, u]
+      Table2[pp, 2] = SEpara[1, pp]
+      pp = pp + 1
+    }
+  }
+  
+  for (t in 2:j_max) {
+    Table2[pp, 1] = object$beta1_estimate[t]
+    Table2[pp, 2] = SEpara[1, pp]
+    pp = pp + 1
+  }
+  
+  uu <- 1
+  for (t in 1:j_max) {
+    Table2[pp, 1] = object$sigma2_estimate[t]
+    Table2[pp, 2] = SElogpara[1, uu]
+    pp = pp + 1
+    uu = uu + 1
+  }
+  
+  for (t in 1:k_max) {
+    Table2[pp, 1] = object$sigmad_estimate[t]
+    Table2[pp, 2] = SElogpara[1, uu]
+    pp = pp + 1
+    uu = uu + 1
+  }
+  
+  uu = pp - j_max - k_max
+  for (t in 1:q_eta) {
+    Table2[pp, 1] = object$eta_estimate[t]
+    Table2[pp, 2] = SEpara[1, uu]
+    pp = pp + 1
+    uu = uu + 1
+  }
+  
+  Table2[pp, 1] = object$gamma
+  Table2[pp, 2] = SEpara[1, uu]
+  
+  Table2[, 3] <- Table2[, 1] - 1.96*Table2[, 2]
+  Table2[, 4] <- Table2[, 1] + 1.96*Table2[, 2]
+  
+  index <- c((j_max*p_max + j_max):(j_max*p_max + j_max*2 + k_max - 1))
+  for (i in index) {
+    Table2[i, 3] <- exp(log(Table2[i, 1]) - 1.96*Table2[i, 2])
+    Table2[i, 4] <- exp(log(Table2[i, 1]) + 1.96*Table2[i, 2])
+    Table2[i, 5] <- NA
+  }
+  
+  for (i in 1:nrow(Table2)) {
+    if(!is.na(Table2[i, 5])) {
+      zval = (Table2[i, 1]/Table2[i, 2])
+      Table2[i, 5] = 2 * pnorm(-abs(zval))
+    }
+  }
+  
+  Table2 <- round(Table2, 3)
+  colnames(Table2) <- c("coef", "SE", "95%Lower", "95%Upper", "p-value")
+  
+  if (print.bootspara == TRUE) {
+    Result <- list(ParaMatrix, Table2)
+    names(Result) <- c("ParaMatrix", "Table")
+    return(Result)
+  } else {
+    return(Table2)
+  }
   
 }
