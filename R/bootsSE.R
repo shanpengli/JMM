@@ -95,7 +95,7 @@ bootsSE <- function(object, nboots = 100, print.bootspara = TRUE, maxiter = 1000
                           k_max = k_max, quadpoint = quadpoint, maxiter = maxiter,
                           do.trace = FALSE, beta0init = tbeta0, beta1init = tbeta1,
                           sigmainit = tsigma2, thetainit = ttheta, sigmadinit = tsigmad,
-                          gammainit = tgamma)
+                          gammainit = tgamma, survVar = TRUE)
       
       if (fit$iter == maxiter) {
         ParaMatrix[i, ] <- NA
@@ -181,7 +181,8 @@ bootsSE <- function(object, nboots = 100, print.bootspara = TRUE, maxiter = 1000
                                         beta0init = tbeta0, beta1init = tbeta1,
                                         sigmainit = tsigma2, thetainit = ttheta, 
                                         sigmadinit = tsigmad,
-                                        gammainit = tgamma, mc.cores = ncores)
+                                        gammainit = tgamma,
+                                        mc.cores = ncores)
     
     ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (object$TotalPara + 1)))
     ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ]
@@ -204,7 +205,9 @@ bootsSE <- function(object, nboots = 100, print.bootspara = TRUE, maxiter = 1000
                                           beta0init = tbeta0, beta1init = tbeta1,
                                           sigmainit = tsigma2, thetainit = ttheta, 
                                           sigmadinit = tsigmad,
-                                          gammainit = tgamma, mc.cores = nncores)
+                                          gammainit = tgamma,
+                                          survVar = TRUE,
+                                          mc.cores = nncores)
       
       SubParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (object$TotalPara + 1)))
       

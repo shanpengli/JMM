@@ -84,7 +84,8 @@ namespace jmsplinespace {
       const gsl_matrix *sigmau_inv,
       const int quadpoint,
       const std::vector<double> xs,
-      const std::vector<double> ws
+      const std::vector<double> ws,
+      const int survvar
   );
   
   
@@ -167,7 +168,8 @@ namespace jmsplinespace {
                             std::vector<double> ws,
                             std::string beta0initnew, std::string beta1initnew,
                             std::string sigmainitnew, std::string thetainitnew,
-                            std::string sigmadinitnew,double gamma);
+                            std::string sigmadinitnew,double gamma,
+                            int survvar);
 
 }
 

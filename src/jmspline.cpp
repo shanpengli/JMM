@@ -197,7 +197,8 @@ namespace jmsplinespace {
       const gsl_matrix *sigmau_inv,
       const int quadpoint,
       const std::vector<double> xs,
-      const std::vector<double> ws
+      const std::vector<double> ws,
+      const int survvar
       )
     {
       int p_max=beta0->size2;
@@ -521,62 +522,61 @@ namespace jmsplinespace {
       
       
       /* update eta */
-      
-      gsl_vector *W=gsl_vector_alloc(q_eta);
-      gsl_matrix *WW=gsl_matrix_alloc(q_eta,q_eta);
-      gsl_vector *SW=gsl_vector_alloc(q_eta);
-      gsl_matrix *SWW=gsl_matrix_alloc(q_eta,q_eta);
-      
-      gsl_vector_set_zero(SW);
-      gsl_matrix_set_zero(SWW);
-      
-      
-      for(j=0;j<n;j++)
-      {
-        for(u=0;u<q_eta;u++)    gsl_vector_set(W,u,gsl_matrix_get(C,j,2+u));
+      if (survvar == 1) {
+        gsl_vector *W=gsl_vector_alloc(q_eta);
+        gsl_matrix *WW=gsl_matrix_alloc(q_eta,q_eta);
+        gsl_vector *SW=gsl_vector_alloc(q_eta);
+        gsl_matrix *SWW=gsl_matrix_alloc(q_eta,q_eta);
         
-        if(gsl_matrix_get(C,j,1)==1)    gsl_vector_add(SW,W);
+        gsl_vector_set_zero(SW);
+        gsl_matrix_set_zero(SWW);
         
-        for(p=0;p<a;p++)  
+        
+        for(j=0;j<n;j++)
         {
-          if(gsl_matrix_get(C,j,0)>=gsl_matrix_get(H01,0,p))
+          for(u=0;u<q_eta;u++)    gsl_vector_set(W,u,gsl_matrix_get(C,j,2+u));
+          
+          if(gsl_matrix_get(C,j,1)==1)    gsl_vector_add(SW,W);
+          
+          for(p=0;p<a;p++)  
           {
-            for(u=0;u<q_eta;u++)    gsl_vector_set(W,u,gsl_matrix_get(C,j,2+u));
-            MulV(W,WW);
-            
-            gsl_bspline_eval(gsl_matrix_get(H01,0,p),B_spl,bw); 
-            gsl_vector_memcpy(helpb,B_spl);
-            MulM(sigmau_inv,helpb,B_spl);
-            
-            temp1=MulVV(eta,W);
-            temp2=0;
-            for(u=0;u<q_b;u++)    temp2+=gsl_vector_get(B_spl,u)*gsl_vector_get(theta,u);
-            
-            temp1+=temp2*(*gamma);
-            
-            gsl_vector_scale(W,gsl_matrix_get(H01,2,p)*exp(temp1)*gsl_matrix_get(FUNE,j,p));
-            gsl_matrix_scale(WW,gsl_matrix_get(H01,2,p)*exp(temp1)*gsl_matrix_get(FUNE,j,p));
-            
-            gsl_vector_sub(SW,W);
-            gsl_matrix_add(SWW,WW);
+            if(gsl_matrix_get(C,j,0)>=gsl_matrix_get(H01,0,p))
+            {
+              for(u=0;u<q_eta;u++)    gsl_vector_set(W,u,gsl_matrix_get(C,j,2+u));
+              MulV(W,WW);
+              
+              gsl_bspline_eval(gsl_matrix_get(H01,0,p),B_spl,bw); 
+              gsl_vector_memcpy(helpb,B_spl);
+              MulM(sigmau_inv,helpb,B_spl);
+              
+              temp1=MulVV(eta,W);
+              temp2=0;
+              for(u=0;u<q_b;u++)    temp2+=gsl_vector_get(B_spl,u)*gsl_vector_get(theta,u);
+              
+              temp1+=temp2*(*gamma);
+              
+              gsl_vector_scale(W,gsl_matrix_get(H01,2,p)*exp(temp1)*gsl_matrix_get(FUNE,j,p));
+              gsl_matrix_scale(WW,gsl_matrix_get(H01,2,p)*exp(temp1)*gsl_matrix_get(FUNE,j,p));
+              
+              gsl_vector_sub(SW,W);
+              gsl_matrix_add(SWW,WW);
+            }
           }
         }
-      }
-      
-      
-      status=inv_matrix(SWW);
-      if(status==100) return status;
-      
-      MulM(SWW,SW,W);
-      
-      for(p=0;p<q_eta;p++)   gsl_vector_set(eta,p,gsl_vector_get(eta,p)+gsl_vector_get(W,p));
-      
-      gsl_vector_free(W);
-      gsl_matrix_free(WW);
-      gsl_vector_free(SW);
-      gsl_matrix_free(SWW);
-      
-      
+        
+        
+        status=inv_matrix(SWW);
+        if(status==100) return status;
+        
+        MulM(SWW,SW,W);
+        
+        for(p=0;p<q_eta;p++)   gsl_vector_set(eta,p,gsl_vector_get(eta,p)+gsl_vector_get(W,p));
+        
+        gsl_vector_free(W);
+        gsl_matrix_free(WW);
+        gsl_vector_free(SW);
+        gsl_matrix_free(SWW);
+        }
       
       /* update gamma  */
       
@@ -1765,7 +1765,8 @@ int GetE(
                               std::vector<double> ws,
                               std::string beta0initnew, std::string beta1initnew,
                               std::string sigmainitnew, std::string thetainitnew,
-                              std::string sigmadinitnew,double gamma)
+                              std::string sigmadinitnew,double gamma,
+                              int survvar)
     {
       
       /* allocate space for data */
@@ -2289,7 +2290,7 @@ int GetE(
           /* run EM to get updated parameter estimates */
           
           status=EM(beta0,beta1,sigma,theta,sigmad,eta,btheta,H01,&gamma,pdim,
-                    Bio,C,M,bw,sigmau_inv, quadpoint, xs, ws);
+                    Bio,C,M,bw,sigmau_inv, quadpoint, xs, ws, survvar);
           
           
           if (trace) {
@@ -2517,6 +2518,7 @@ int GetE(
         ret["loglike"] = loglike;
         ret["AIC"] = AIC;
         ret["TotalPara"] = TotalPara;
+        ret["SurvivalVar"] = survvar;
         
         
         gsl_matrix_free(FUNA);

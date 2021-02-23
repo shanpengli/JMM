@@ -21,7 +21,8 @@
 ##' @param sigmainit Initial values of sigma^2. 
 ##' @param thetainit Initial values of theta. 
 ##' @param sigmadinit Initial values of sigmad. 
-##' @param gammainit Initial values of gamma. 
+##' @param gammainit Initial values of gamma.
+##' @param survVar logical; TRUE if the survival sub-model include covariates. Default is TRUE.  
 ##' @export
 ##'
 
@@ -29,12 +30,18 @@ jmspline <- function(ydata, cdata, mdata, sigmau_inv, tbtheta,
                      tL, tU, nbreak, p01, p02, j_max, k_max = 2,
                      quadpoint = 10, maxiter = 2500, do.trace = FALSE,
                      beta0init = NULL, beta1init = NULL, sigmainit = NULL,
-                     thetainit = NULL, sigmadinit = NULL, gammainit = NULL) {
+                     thetainit = NULL, sigmadinit = NULL, gammainit = NULL, survVar = TRUE) {
   
   if (do.trace) {
     trace=1;
   } else {
     trace=0;
+  }
+  
+  if (survVar) {
+    survvar=1;
+  } else {
+    survvar=0;
   }
   
   #Gaussian-Hermite quadrature nodes and weights
@@ -96,8 +103,6 @@ jmspline <- function(ydata, cdata, mdata, sigmau_inv, tbtheta,
   }
   
   
-  
-  
   ##pass data to jmspline
   ydatanew=tempfile(pattern = "", fileext = ".txt")
   writenh(ydata,ydatanew)
@@ -109,6 +114,7 @@ jmspline <- function(ydata, cdata, mdata, sigmau_inv, tbtheta,
   writenh(sigmau_inv,sigmau_invnew)
   tbthetanew=tempfile(pattern = "", fileext = ".txt")
   writenh(tbtheta,tbthetanew)
+  
   
   #pass initals to jmspline
   beta0initnew=tempfile(pattern = "", fileext = ".txt")
@@ -122,13 +128,12 @@ jmspline <- function(ydata, cdata, mdata, sigmau_inv, tbtheta,
   sigmadinitnew=tempfile(pattern = "", fileext = ".txt")
   writenh(sigmadinit,sigmadinitnew)
   
-  
   myresult = jmspline_main(n, n_total, tL, tU, p01, p02, q_b, q_eta, j_max, 
                            t_max, nbreak, k_max, quadpoint, maxiter, trace, 
                            ydatanew, mdatanew, cdatanew, sigmau_invnew, 
                            tbthetanew, xs, ws, beta0initnew, beta1initnew,
-                           sigmainitnew, thetainitnew, sigmadinitnew, gammainit
-                           )
+                           sigmainitnew, thetainitnew, sigmadinitnew, gammainit,
+                           survvar)
   myresult$type="jmspline"
   myresult$quadpoint <- quadpoint
   myresult$n = n

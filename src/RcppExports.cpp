@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // jmspline_main
-Rcpp::List jmspline_main(SEXP n, SEXP n_total, SEXP tL, SEXP tU, SEXP p01, SEXP p02, SEXP q_b, SEXP q_eta, SEXP j_max, SEXP t_max, SEXP nbreak, SEXP k_max, SEXP quadpoint, SEXP maxiter, SEXP trace, SEXP ydatanew, SEXP mdatanew, SEXP cdatanew, SEXP sigmau_invnew, SEXP tbthetanew, SEXP xs, SEXP ws, SEXP beta0initnew, SEXP beta1initnew, SEXP sigmainitnew, SEXP thetainitnew, SEXP sigmadinitnew, SEXP gammainit);
-RcppExport SEXP _JMM_jmspline_main(SEXP nSEXP, SEXP n_totalSEXP, SEXP tLSEXP, SEXP tUSEXP, SEXP p01SEXP, SEXP p02SEXP, SEXP q_bSEXP, SEXP q_etaSEXP, SEXP j_maxSEXP, SEXP t_maxSEXP, SEXP nbreakSEXP, SEXP k_maxSEXP, SEXP quadpointSEXP, SEXP maxiterSEXP, SEXP traceSEXP, SEXP ydatanewSEXP, SEXP mdatanewSEXP, SEXP cdatanewSEXP, SEXP sigmau_invnewSEXP, SEXP tbthetanewSEXP, SEXP xsSEXP, SEXP wsSEXP, SEXP beta0initnewSEXP, SEXP beta1initnewSEXP, SEXP sigmainitnewSEXP, SEXP thetainitnewSEXP, SEXP sigmadinitnewSEXP, SEXP gammainitSEXP) {
+Rcpp::List jmspline_main(SEXP n, SEXP n_total, SEXP tL, SEXP tU, SEXP p01, SEXP p02, SEXP q_b, SEXP q_eta, SEXP j_max, SEXP t_max, SEXP nbreak, SEXP k_max, SEXP quadpoint, SEXP maxiter, SEXP trace, SEXP ydatanew, SEXP mdatanew, SEXP cdatanew, SEXP sigmau_invnew, SEXP tbthetanew, SEXP xs, SEXP ws, SEXP beta0initnew, SEXP beta1initnew, SEXP sigmainitnew, SEXP thetainitnew, SEXP sigmadinitnew, SEXP gammainit, SEXP survvar);
+RcppExport SEXP _JMM_jmspline_main(SEXP nSEXP, SEXP n_totalSEXP, SEXP tLSEXP, SEXP tUSEXP, SEXP p01SEXP, SEXP p02SEXP, SEXP q_bSEXP, SEXP q_etaSEXP, SEXP j_maxSEXP, SEXP t_maxSEXP, SEXP nbreakSEXP, SEXP k_maxSEXP, SEXP quadpointSEXP, SEXP maxiterSEXP, SEXP traceSEXP, SEXP ydatanewSEXP, SEXP mdatanewSEXP, SEXP cdatanewSEXP, SEXP sigmau_invnewSEXP, SEXP tbthetanewSEXP, SEXP xsSEXP, SEXP wsSEXP, SEXP beta0initnewSEXP, SEXP beta1initnewSEXP, SEXP sigmainitnewSEXP, SEXP thetainitnewSEXP, SEXP sigmadinitnewSEXP, SEXP gammainitSEXP, SEXP survvarSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -39,7 +39,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type thetainitnew(thetainitnewSEXP);
     Rcpp::traits::input_parameter< SEXP >::type sigmadinitnew(sigmadinitnewSEXP);
     Rcpp::traits::input_parameter< SEXP >::type gammainit(gammainitSEXP);
-    rcpp_result_gen = Rcpp::wrap(jmspline_main(n, n_total, tL, tU, p01, p02, q_b, q_eta, j_max, t_max, nbreak, k_max, quadpoint, maxiter, trace, ydatanew, mdatanew, cdatanew, sigmau_invnew, tbthetanew, xs, ws, beta0initnew, beta1initnew, sigmainitnew, thetainitnew, sigmadinitnew, gammainit));
+    Rcpp::traits::input_parameter< SEXP >::type survvar(survvarSEXP);
+    rcpp_result_gen = Rcpp::wrap(jmspline_main(n, n_total, tL, tU, p01, p02, q_b, q_eta, j_max, t_max, nbreak, k_max, quadpoint, maxiter, trace, ydatanew, mdatanew, cdatanew, sigmau_invnew, tbthetanew, xs, ws, beta0initnew, beta1initnew, sigmainitnew, thetainitnew, sigmadinitnew, gammainit, survvar));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -66,10 +67,45 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// Simdata_main
+Rcpp::List Simdata_main(SEXP n, SEXP sim, SEXP nbreak, SEXP tL, SEXP tU, SEXP q_eta, SEXP j_max, SEXP p01, SEXP p02, SEXP t_max, SEXP distr, SEXP m_age, SEXP std_age, SEXP k_max, SEXP tbthetanew, SEXP sigmau_invnew, SEXP tbeta0new, SEXP tbeta1new, SEXP tsigmanew, SEXP tthetanew, SEXP tsigmadnew, SEXP tetanew, SEXP tgamma, SEXP lambda0);
+RcppExport SEXP _JMM_Simdata_main(SEXP nSEXP, SEXP simSEXP, SEXP nbreakSEXP, SEXP tLSEXP, SEXP tUSEXP, SEXP q_etaSEXP, SEXP j_maxSEXP, SEXP p01SEXP, SEXP p02SEXP, SEXP t_maxSEXP, SEXP distrSEXP, SEXP m_ageSEXP, SEXP std_ageSEXP, SEXP k_maxSEXP, SEXP tbthetanewSEXP, SEXP sigmau_invnewSEXP, SEXP tbeta0newSEXP, SEXP tbeta1newSEXP, SEXP tsigmanewSEXP, SEXP tthetanewSEXP, SEXP tsigmadnewSEXP, SEXP tetanewSEXP, SEXP tgammaSEXP, SEXP lambda0SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type n(nSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type sim(simSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type nbreak(nbreakSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tL(tLSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tU(tUSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type q_eta(q_etaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type j_max(j_maxSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type p01(p01SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type p02(p02SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type t_max(t_maxSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type distr(distrSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type m_age(m_ageSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type std_age(std_ageSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type k_max(k_maxSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tbthetanew(tbthetanewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type sigmau_invnew(sigmau_invnewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tbeta0new(tbeta0newSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tbeta1new(tbeta1newSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tsigmanew(tsigmanewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tthetanew(tthetanewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tsigmadnew(tsigmadnewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tetanew(tetanewSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type tgamma(tgammaSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type lambda0(lambda0SEXP);
+    rcpp_result_gen = Rcpp::wrap(Simdata_main(n, sim, nbreak, tL, tU, q_eta, j_max, p01, p02, t_max, distr, m_age, std_age, k_max, tbthetanew, sigmau_invnew, tbeta0new, tbeta1new, tsigmanew, tthetanew, tsigmadnew, tetanew, tgamma, lambda0));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_JMM_jmspline_main", (DL_FUNC) &_JMM_jmspline_main, 28},
+    {"_JMM_jmspline_main", (DL_FUNC) &_JMM_jmspline_main, 29},
     {"_JMM_bootsdata_main", (DL_FUNC) &_JMM_bootsdata_main, 13},
+    {"_JMM_Simdata_main", (DL_FUNC) &_JMM_Simdata_main, 24},
     {NULL, NULL, 0}
 };
 

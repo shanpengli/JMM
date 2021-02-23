@@ -25,7 +25,8 @@ jmspline(
   sigmainit = NULL,
   thetainit = NULL,
   sigmadinit = NULL,
-  gammainit = NULL
+  gammainit = NULL,
+  survVar = TRUE
 )
 }
 \arguments{
@@ -71,6 +72,8 @@ Each subject has one data entry.}
 \item{sigmadinit}{Initial values of sigmad.}
 
 \item{gammainit}{Initial values of gamma.}
+
+\item{survVar}{logical; TRUE if the survival sub-model include covariates. Default is TRUE.}
 }
 \description{
 Joint modeling of longitudinal continuous and survival data

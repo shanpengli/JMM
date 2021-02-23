@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include "jmspline.hpp"
 #include "bootsdata.hpp"
+#include "Simdata.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -20,7 +21,7 @@ Rcpp::List  jmspline_main(SEXP n, SEXP n_total, SEXP tL, SEXP tU, SEXP p01,
                           SEXP mdatanew, SEXP cdatanew, SEXP sigmau_invnew, 
                           SEXP tbthetanew, SEXP xs, SEXP ws, SEXP beta0initnew, 
                           SEXP beta1initnew, SEXP sigmainitnew, SEXP thetainitnew, 
-                          SEXP sigmadinitnew, SEXP gammainit)
+                          SEXP sigmadinitnew, SEXP gammainit, SEXP survvar)
 {
   Rcpp::List result;
   try {
@@ -45,7 +46,8 @@ Rcpp::List  jmspline_main(SEXP n, SEXP n_total, SEXP tL, SEXP tU, SEXP p01,
                                          as<std::string>(sigmainitnew),
                                          as<std::string>(thetainitnew),
                                          as<std::string>(sigmadinitnew),
-                                         as<double> (gammainit));
+                                         as<double> (gammainit),
+                                         as<int> (survvar));
     if(Rf_isNull(result)){
       throw std::range_error("Possible files reading or format errors");
     }
@@ -77,6 +79,51 @@ Rcpp::List  bootsdata_main(SEXP n, SEXP n1, SEXP tL, SEXP tU, SEXP q_eta, SEXP j
                                          as<std::string> (cdatanew),
                                          as<std::string>(mdatanew),
                                          as<int> (nboots));
+    if(Rf_isNull(result)){
+      throw std::range_error("Possible files reading or format errors");
+    }
+    return result;
+  } catch(std::exception &ex) {
+    forward_exception_to_r(ex);
+  } catch(...) {
+    ::Rf_error("c++ exception (unknown reason)");
+  }
+  return R_NilValue;             // not reached
+  
+}
+
+// [[Rcpp::export]]
+Rcpp::List  Simdata_main(SEXP n, SEXP sim, SEXP nbreak, SEXP tL, SEXP tU, SEXP q_eta, 
+                         SEXP j_max, SEXP p01, SEXP p02, SEXP t_max, SEXP distr, SEXP m_age,
+                         SEXP std_age, SEXP k_max,
+                         SEXP tbthetanew, SEXP sigmau_invnew,
+                         SEXP tbeta0new, SEXP tbeta1new,
+                         SEXP tsigmanew, SEXP tthetanew,
+                         SEXP tsigmadnew, SEXP tetanew,
+                         SEXP tgamma, SEXP lambda0)
+{
+  Rcpp::List result;
+  try {
+    
+    result=Simdataspace::Simdata_cmain(as<int> (n), as<int> (sim), 
+                                         as<int> (nbreak),
+                                         as<double> (tL), as<double> (tU), 
+                                         as<int> (q_eta), as<int> (j_max), 
+                                         as<int>(p01), as<int>(p02),
+                                         as<int>(t_max), as<int>(distr),
+                                         as<double>(m_age), as<double>(std_age), 
+                                         as<int>(k_max),  
+                                         as<std::string> (tbthetanew),
+                                         as<std::string> (sigmau_invnew),
+                                         as<std::string>(tbeta0new),
+                                         as<std::string>(tbeta1new),
+                                         as<std::string>(tsigmanew),
+                                         as<std::string>(tthetanew),
+                                         as<std::string>(tsigmadnew),
+                                         as<std::string>(tetanew),
+                                         as<double> (tgamma),
+                                         as<double> (lambda0)
+                                         );
     if(Rf_isNull(result)){
       throw std::range_error("Possible files reading or format errors");
     }
