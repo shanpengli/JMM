@@ -1473,18 +1473,35 @@ int GetE(
         const gsl_vector *preeta,
         const gsl_vector *eta,
         const double pregamma,
-        const double gamma
+        const double gamma,
+        const gsl_vector *presigmad,
+        const gsl_vector *sigmad,
+        const int conversigmad
     )
     {    
       
       double epsilon=0.0001;  
       
-      if(DiffM(prebeta0,beta0)>epsilon || DiffV(prebeta1,beta1)>epsilon || DiffV(presigma,sigma)>epsilon ||
-         DiffV(pretheta,theta)>epsilon || DiffV(preeta,eta)>epsilon || Abs(pregamma,gamma)>epsilon)
+      if (conversigmad == 0) {
         
-        return 1;
+        if(DiffM(prebeta0,beta0)>epsilon || DiffV(prebeta1,beta1)>epsilon || DiffV(presigma,sigma)>epsilon ||
+           DiffV(pretheta,theta)>epsilon || DiffV(preeta,eta)>epsilon || Abs(pregamma,gamma)>epsilon)
+          
+          return 1;
+        
+        else return 0;
+      } else{
+        
+        if(DiffM(prebeta0,beta0)>epsilon || DiffV(prebeta1,beta1)>epsilon || DiffV(presigma,sigma)>epsilon ||
+           DiffV(pretheta,theta)>epsilon || DiffV(preeta,eta)>epsilon || Abs(pregamma,gamma)>epsilon 
+             || DiffV(presigmad,sigmad)>epsilon)
+          
+          return 1;
+        
+        else return 0;
+        
+        }
       
-      else return 0;
       
     }
     
@@ -1766,7 +1783,7 @@ int GetE(
                               std::string beta0initnew, std::string beta1initnew,
                               std::string sigmainitnew, std::string thetainitnew,
                               std::string sigmadinitnew,double gamma,
-                              int survvar)
+                              int survvar, int conversigmad)
     {
       
       /* allocate space for data */
@@ -2358,7 +2375,7 @@ int GetE(
             }
           
         }while(Diffn(prebeta0,beta0,prebeta1,beta1,presigma,sigma,pretheta,
-                     theta,preeta,eta,pregamma,gamma)==1 && status != 100 && 
+                     theta,preeta,eta,pregamma,gamma,presigmad,sigmad,conversigmad)==1 && status != 100 && 
                      iter<maxiter);
         
         if(status==100) 

@@ -3,7 +3,7 @@
 ##' @param n sample size for each dataset.
 ##' @param tL lower limit of time point for spline basis.
 ##' @param tU upper limit of time point for spline basis.
-##' @param nbreak number of knots for spline basis.
+##' @param nbreak number of knots for spline basis for a model fit.
 ##' @param p01 number of covariates in the first biomarker.
 ##' @param p02 number of covariates in the second biomarker.
 ##' @param j_max Total number of biomarkers in the longitudinal data.
@@ -15,7 +15,8 @@
 ##' @param k_max dimension of random effects. 
 ##' @param q_eta number of survival covariates.
 ##' @param t_max maximum number of repeated measurements allowed for each subject.
-##' @param sigma_inv sigma_inv.
+##' @param tsigma_inv true sigma_inv matrix.
+##' @param tnbreak number of knots for spline basis for data generation.
 ##' @param tbtheta true btheta matrix.
 ##' @param tbeta0 true value of beta0 matrix.
 ##' @param tbeta1 true value of beta1 vector.
@@ -24,6 +25,7 @@
 ##' @param ttheta true value of theta vector.
 ##' @param teta true value of survival fixed effects.
 ##' @param tgamma true value of latent association parameter. 
+##' @param sigma_invinit Initial values of sigma_inv matrix.
 ##' @param bthetainit a data frame of the normalizing constant for spline basis.
 ##' @param beta0init Initial values of beta0. 
 ##' @param beta1init Initial values of beta1. 
@@ -33,6 +35,7 @@
 ##' @param gammainit Initial values of gamma.
 ##' @param survVar logical; TRUE if the survival sub-model include covariates. Default is FALSE. 
 ##' @param lambda0 true baseline hazard.
+##' @param conversigmad logical; TRUE if sigmad is considered into convergence criteria. Default is FALSE.
 ##' @param ncores number of cores to proceed parallel computation.
 ##' @export
 ##'
@@ -41,21 +44,21 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
                    nbreak = 8, p01 = 1, p02 = 1, j_max = 2, quadpoint = 10,
                    maxiter = 4000, distr = "Gaussian",
                    m_age = 0, std_age = 2, k_max = 2, q_eta = 1, t_max = 19,
-                   tsigmau_inv = NULL,
+                   tsigmau_inv = NULL, tnbreak = 8,
                    tbtheta = NULL, tbeta0 = NULL,
                    tbeta1 = NULL, tsigma = NULL, tsigmad = NULL,
-                   ttheta = NULL, teta = NULL, tgamma = NULL, 
-                   bthetainit = NULL, beta0init = NULL,
+                   ttheta = NULL, teta = NULL, tgamma = NULL, sigmau_invinit = NULL,
+                   bthetainit = NULL, beta0init = NULL, 
                    beta1init = NULL, sigmainit = NULL, thetainit = NULL,
                    sigmadinit = NULL, gammainit = NULL, survVar = FALSE,
-                   lambda0 = NULL, ncores = 2) {
+                   lambda0 = NULL, conversigmad = FALSE, ncores = 2) {
   
   Fsim <- sim*2
   
   a <- SimData(sim = Fsim, n = n, tL = tL, tU = tU, sigmau_inv = tsigmau_inv,
                tbtheta = tbtheta, tbeta0 = tbeta0, tbeta1 = tbeta1,
                tsigma = tsigma, tsigmad = tsigmad, ttheta = ttheta,
-               teta = teta, tgamma = tgamma, nbreak = nbreak, distr = distr, 
+               teta = teta, tgamma = tgamma, nbreak = tnbreak, distr = distr, 
                m_age = m_age, std_age = std_age, k_max = k_max, q_eta = q_eta, 
                t_max = t_max, lambda0 = lambda0)
   
@@ -87,12 +90,12 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
       simmdata <- as.data.frame(simmdata)
       
       fit <- jmspline(ydata = simydata, cdata = simcdata, mdata = simmdata,
-                      sigmau_inv = tsigmau_inv, tbtheta = bthetainit, tL = tL, tU = tU,
+                      sigmau_inv = sigmau_invinit, tbtheta = bthetainit, tL = tL, tU = tU,
                       nbreak = nbreak, p01 = p01, p02 = p02, j_max = j_max,
                       k_max = k_max, quadpoint = quadpoint, maxiter = maxiter,
                       do.trace = FALSE, beta0init = beta0init, beta1init = beta1init,
                       sigmainit = sigmainit, thetainit = thetainit, sigmadinit = sigmadinit,
-                      gammainit = gammainit, survVar = survVar)
+                      gammainit = gammainit, survVar = survVar, conversigmad = conversigmad)
       
       if (fit$iter == maxiter) {
         ParaMatrix[i, ] <- NA
@@ -170,7 +173,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
     
     ParaMatrixRaw <- parallel::mclapply(1:sim, bootsfit, Data = a, 
                                         nycol = nycol, nccol = nccol, 
-                                        sigmau_inv = tsigmau_inv, 
+                                        sigmau_inv = sigmau_invinit, 
                                         tbtheta = bthetainit, tL = tL, tU = tU,
                                         nbreak = nbreak, p01 = p01, p02 = p02, 
                                         j_max = j_max,
@@ -181,6 +184,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
                                         sigmadinit = sigmadinit,
                                         gammainit = gammainit,
                                         survVar = survVar,
+                                        conversigmad = conversigmad,
                                         mc.cores = ncores)
     
     ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = ncolM))
@@ -195,7 +199,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
       ParaMatrixRaw <- parallel::mclapply((t+1):(t + sim - u), bootsfit, 
                                           Data = a, 
                                           nycol = nycol, nccol = nccol, 
-                                          sigmau_inv = tsigmau_inv, 
+                                          sigmau_inv = sigmau_invinit, 
                                           tbtheta = bthetainit, tL = tL, tU = tU,
                                           nbreak = nbreak, p01 = p01, p02 = p02, 
                                           j_max = j_max,
@@ -206,6 +210,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
                                           sigmadinit = sigmadinit,
                                           gammainit = gammainit,
                                           survVar = survVar,
+                                          conversigmad = conversigmad,
                                           mc.cores = nncores)
       
       SubParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = ncolM))

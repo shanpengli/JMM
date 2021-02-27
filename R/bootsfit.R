@@ -8,7 +8,7 @@ bootsfit <- function(i, Data = Data, nycol = nycol, nccol = nccol,
                      sigmainit = tsigma2, thetainit = ttheta, 
                      sigmadinit = tsigmad,
                      gammainit = tgamma,
-                     survVar = survVar) {
+                     survVar = survVar, conversigmad = FALSE) {
   coef <- vector()
   bootsydata <- matrix(unlist(Data[1+(i-1)*3]), ncol = nycol)
   bootsydata <- as.data.frame(bootsydata)
@@ -29,7 +29,7 @@ bootsfit <- function(i, Data = Data, nycol = nycol, nccol = nccol,
                       k_max = k_max, quadpoint = quadpoint, maxiter = maxiter,
                       do.trace = FALSE, beta0init = beta0init, beta1init = beta1init,
                       sigmainit = sigmainit, thetainit = thetainit, sigmadinit = sigmadinit,
-                      gammainit = gammainit, survVar = survVar)
+                      gammainit = gammainit, survVar = survVar, conversigmad = conversigmad)
   
   if (fit$iter == maxiter) {
     totalp <- fit$TotalPara

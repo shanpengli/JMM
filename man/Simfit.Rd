@@ -22,6 +22,7 @@ Simfit(
   q_eta = 1,
   t_max = 19,
   tsigmau_inv = NULL,
+  tnbreak = 8,
   tbtheta = NULL,
   tbeta0 = NULL,
   tbeta1 = NULL,
@@ -30,6 +31,7 @@ Simfit(
   ttheta = NULL,
   teta = NULL,
   tgamma = NULL,
+  sigmau_invinit = NULL,
   bthetainit = NULL,
   beta0init = NULL,
   beta1init = NULL,
@@ -39,6 +41,7 @@ Simfit(
   gammainit = NULL,
   survVar = FALSE,
   lambda0 = NULL,
+  conversigmad = FALSE,
   ncores = 2
 )
 }
@@ -51,7 +54,7 @@ Simfit(
 
 \item{tU}{upper limit of time point for spline basis.}
 
-\item{nbreak}{number of knots for spline basis.}
+\item{nbreak}{number of knots for spline basis for a model fit.}
 
 \item{p01}{number of covariates in the first biomarker.}
 
@@ -74,6 +77,8 @@ Simfit(
 \item{q_eta}{number of survival covariates.}
 
 \item{t_max}{maximum number of repeated measurements allowed for each subject.}
+
+\item{tnbreak}{number of knots for spline basis for data generation.}
 
 \item{tbtheta}{true btheta matrix.}
 
@@ -105,13 +110,17 @@ Simfit(
 
 \item{gammainit}{Initial values of gamma.}
 
-\item{survVar}{logical; TRUE if the survival sub-model include covariates. Default is TRUE.}
+\item{survVar}{logical; TRUE if the survival sub-model include covariates. Default is FALSE.}
 
 \item{lambda0}{true baseline hazard.}
 
+\item{conversigmad}{logical; TRUE if sigmad is considered into convergence criteria. Default is FALSE.}
+
 \item{ncores}{number of cores to proceed parallel computation.}
 
-\item{sigma_inv}{sigma_inv.}
+\item{tsigma_inv}{true sigma_inv matrix.}
+
+\item{sigma_invinit}{Initial values of sigma_inv matrix.}
 }
 \description{
 Simulation results

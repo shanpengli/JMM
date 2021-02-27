@@ -152,7 +152,10 @@ namespace jmsplinespace {
       const gsl_vector *preeta,
       const gsl_vector *eta,
       const double pregamma,
-      const double gamma
+      const double gamma,
+      const gsl_vector *presigmad,
+      const gsl_vector *sigmad,
+      const int conversigmad
   );
 
 
@@ -169,7 +172,7 @@ namespace jmsplinespace {
                             std::string beta0initnew, std::string beta1initnew,
                             std::string sigmainitnew, std::string thetainitnew,
                             std::string sigmadinitnew,double gamma,
-                            int survvar);
+                            int survvar, int conversigmad);
 
 }
 

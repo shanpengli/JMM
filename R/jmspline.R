@@ -22,7 +22,8 @@
 ##' @param thetainit Initial values of theta. 
 ##' @param sigmadinit Initial values of sigmad. 
 ##' @param gammainit Initial values of gamma.
-##' @param survVar logical; TRUE if the survival sub-model include covariates. Default is TRUE.  
+##' @param survVar logical; TRUE if the survival sub-model include covariates. Default is TRUE.
+##' @param conversigmad logical; TRUE if sigmad is considered into convergence criteria. Default is FALSE.
 ##' @export
 ##'
 
@@ -30,7 +31,8 @@ jmspline <- function(ydata, cdata, mdata, sigmau_inv, tbtheta,
                      tL, tU, nbreak, p01, p02, j_max, k_max = 2,
                      quadpoint = 10, maxiter = 2500, do.trace = FALSE,
                      beta0init = NULL, beta1init = NULL, sigmainit = NULL,
-                     thetainit = NULL, sigmadinit = NULL, gammainit = NULL, survVar = TRUE) {
+                     thetainit = NULL, sigmadinit = NULL, gammainit = NULL, survVar = TRUE,
+                     conversigmad = FALSE) {
   
   if (do.trace) {
     trace=1;
@@ -42,6 +44,12 @@ jmspline <- function(ydata, cdata, mdata, sigmau_inv, tbtheta,
     survvar=1;
   } else {
     survvar=0;
+  }
+  
+  if (conversigmad) {
+    conversigmad=1;
+  } else {
+    conversigmad=0;
   }
   
   #Gaussian-Hermite quadrature nodes and weights
@@ -133,7 +141,7 @@ jmspline <- function(ydata, cdata, mdata, sigmau_inv, tbtheta,
                            ydatanew, mdatanew, cdatanew, sigmau_invnew, 
                            tbthetanew, xs, ws, beta0initnew, beta1initnew,
                            sigmainitnew, thetainitnew, sigmadinitnew, gammainit,
-                           survvar)
+                           survvar, conversigmad)
   myresult$type="jmspline"
   myresult$quadpoint <- quadpoint
   myresult$n = n

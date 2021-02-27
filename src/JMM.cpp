@@ -21,7 +21,8 @@ Rcpp::List  jmspline_main(SEXP n, SEXP n_total, SEXP tL, SEXP tU, SEXP p01,
                           SEXP mdatanew, SEXP cdatanew, SEXP sigmau_invnew, 
                           SEXP tbthetanew, SEXP xs, SEXP ws, SEXP beta0initnew, 
                           SEXP beta1initnew, SEXP sigmainitnew, SEXP thetainitnew, 
-                          SEXP sigmadinitnew, SEXP gammainit, SEXP survvar)
+                          SEXP sigmadinitnew, SEXP gammainit, SEXP survvar, 
+                          SEXP conversigmad)
 {
   Rcpp::List result;
   try {
@@ -47,7 +48,8 @@ Rcpp::List  jmspline_main(SEXP n, SEXP n_total, SEXP tL, SEXP tU, SEXP p01,
                                          as<std::string>(thetainitnew),
                                          as<std::string>(sigmadinitnew),
                                          as<double> (gammainit),
-                                         as<int> (survvar));
+                                         as<int> (survvar),
+                                         as<int> (conversigmad));
     if(Rf_isNull(result)){
       throw std::range_error("Possible files reading or format errors");
     }
