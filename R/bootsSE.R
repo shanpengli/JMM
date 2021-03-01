@@ -182,6 +182,8 @@ bootsSE <- function(object, nboots = 100, print.bootspara = TRUE, maxiter = 1000
                                         sigmainit = tsigma2, thetainit = ttheta, 
                                         sigmadinit = tsigmad,
                                         gammainit = tgamma,
+                                        survVar = TRUE,
+                                        conversigmad = FALSE,
                                         mc.cores = ncores)
     
     ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (object$TotalPara + 1)))
