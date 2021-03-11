@@ -41,6 +41,7 @@ Simfit(
   gammainit = NULL,
   survVar = FALSE,
   lambda0 = NULL,
+  out.bs = FALSE,
   conversigmad = FALSE,
   ncores = 2
 )
@@ -113,6 +114,8 @@ Simfit(
 \item{survVar}{logical; TRUE if the survival sub-model include covariates. Default is FALSE.}
 
 \item{lambda0}{true baseline hazard.}
+
+\item{out.bs}{logical; TRUE if output baseline hazard only. Default is FALSE.}
 
 \item{conversigmad}{logical; TRUE if sigmad is considered into convergence criteria. Default is FALSE.}
 

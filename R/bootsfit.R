@@ -8,8 +8,8 @@ bootsfit <- function(i, Data = Data, nycol = nycol, nccol = nccol,
                      sigmainit = tsigma2, thetainit = ttheta, 
                      sigmadinit = tsigmad,
                      gammainit = tgamma,
-                     survVar = survVar, conversigmad = FALSE) {
-  coef <- vector()
+                     survVar = survVar, conversigmad = FALSE, out.bs = FALSE) {
+  coef1 <- vector()
   bootsydata <- matrix(unlist(Data[1+(i-1)*3]), ncol = nycol)
   bootsydata <- as.data.frame(bootsydata)
   bootscdata <- matrix(unlist(Data[2+(i-1)*3]), ncol = nccol)
@@ -33,8 +33,28 @@ bootsfit <- function(i, Data = Data, nycol = nycol, nccol = nccol,
   
   if (fit$iter == maxiter) {
     totalp <- fit$TotalPara
-    coef <- rep(NA, totalp+1)
-    return(coef)
+    coef1 <- rep(NA, totalp+1) 
+    if (out.bs == TRUE) {
+      totalp <- fit$NumEventTime
+      coef2 <- matrix(NA, nrow = totalp, ncol = 3) 
+      coef <- list(coef1, coef2)
+      names(coef) <- c("coef1", "coef2")
+      return(coef)
+    } else {
+      return(coef1)
+    }
+  } else if (fit$loglike == -Inf) {
+    totalp <- fit$TotalPara
+    coef1 <- rep(NA, totalp+1) 
+    if (out.bs == TRUE) {
+      totalp <- fit$NumEventTime
+      coef2 <- matrix(NA, nrow = totalp, ncol = 3) 
+      coef <- list(coef1, coef2)
+      names(coef) <- c("coef1", "coef2")
+      return(coef)
+    } else {
+      return(coef1)
+    }
   } else {
     beta0 <- fit$beta0_matrix
     beta1 <- fit$beta1_estimate
@@ -48,46 +68,52 @@ bootsfit <- function(i, Data = Data, nycol = nycol, nccol = nccol,
     pp = 1
     for (t in 1:j_max) {
       for (u in 1:p_max) {
-        coef[pp] = beta0[t, u]
+        coef1[pp] = beta0[t, u]
         pp = pp+1
       }
     }
     
     for (t in 1:j_max) {
-      coef[pp] = beta1[t]
+      coef1[pp] = beta1[t]
       pp = pp+1
     }
     
     for (t in 1:j_max) {
-      coef[pp] = sigma2[t]
+      coef1[pp] = sigma2[t]
       pp = pp+1
     }
     
     for (t in 1:q_b) {
-      coef[pp] = theta[t]
+      coef1[pp] = theta[t]
       pp = pp+1
     }
     
     for (t in 1:k_max) {
-      coef[pp] = sigmad[t]
+      coef1[pp] = sigmad[t]
       pp = pp+1
     }
     
     for (t in 1:q_eta) {
-      coef[pp] = eta[t]
+      coef1[pp] = eta[t]
       pp = pp+1
     }
     
     for (t in 1:k_max) {
       for (u in 1:q_b) {
-        coef[pp] = btheta[u, t]
+        coef1[pp] = btheta[u, t]
         pp = pp+1
       }
     }
     
-    coef[pp] = gamma
-    
-    return(coef)
-    
+    coef1[pp] = gamma
+    if (out.bs == TRUE) {
+      coef2 <- t(fit$BaselineHazard)
+      coef <- list(coef1, coef2)
+      names(coef) <- c("coef1", "coef2")
+      return(coef)
+    } else {
+      return(coef1)
+    }
   }
+
 }

@@ -35,6 +35,7 @@
 ##' @param gammainit Initial values of gamma.
 ##' @param survVar logical; TRUE if the survival sub-model include covariates. Default is FALSE. 
 ##' @param lambda0 true baseline hazard.
+##' @param out.bs logical; TRUE if output baseline hazard only. Default is FALSE.
 ##' @param conversigmad logical; TRUE if sigmad is considered into convergence criteria. Default is FALSE.
 ##' @param ncores number of cores to proceed parallel computation.
 ##' @export
@@ -51,7 +52,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
                    bthetainit = NULL, beta0init = NULL, 
                    beta1init = NULL, sigmainit = NULL, thetainit = NULL,
                    sigmadinit = NULL, gammainit = NULL, survVar = FALSE,
-                   lambda0 = NULL, conversigmad = FALSE, ncores = 2) {
+                   lambda0 = NULL, out.bs = FALSE, conversigmad = FALSE, ncores = 2) {
   
   Fsim <- sim*2
   
@@ -75,6 +76,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
   nycol <- dim(a$ydata_0)[2]
   nccol <- dim(a$cdata_0)[2]
   
+  BHMatrix <- NULL
   if (ncores == 1) {
     ## Allocate a matrix for simulated estimates
     ParaMatrix <- matrix(NA, nrow = Fsim, ncol = ncolM)
@@ -99,9 +101,12 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
       
       if (fit$iter == maxiter) {
         ParaMatrix[i, ] <- NA
+      } else if (fit$loglike == -Inf) {
+        ParaMatrix[i, ] <- NA
       } else {
         Realsim <- Realsim + 1
         writeLines(paste0(Realsim, " th sample's parameter estimates is collected!"))
+        
         beta0 <- fit$beta0_matrix
         beta1 <- fit$beta1_estimate
         sigma2 <- fit$sigma2_estimate
@@ -162,42 +167,30 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
         ParaMatrix[i, pp] = gamma
         colnames(ParaMatrix)[pp] <- "gamma"
         
+        
+        ##output baselinehazard
+        if (out.bs == TRUE) {
+          BS <- t(fit$BaselineHazard)
+          BS <- cbind(BS, Realsim)
+          BHMatrix <- rbind(BHMatrix, BS) 
+        } 
+        
       }
       
       if (Realsim == sim) break
       
     }
-    ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ] 
+    ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ]
+    if (out.bs == TRUE) BHMatrix <- BHMatrix[, -2]
+    
+    a <- list(ParaMatrix, BHMatrix)
+    names(a) <- c("ParaMatrix", "BHMatrix")
+    return(a)
     
   } else {
-    
-    ParaMatrixRaw <- parallel::mclapply(1:sim, bootsfit, Data = a, 
-                                        nycol = nycol, nccol = nccol, 
-                                        sigmau_inv = sigmau_invinit, 
-                                        tbtheta = bthetainit, tL = tL, tU = tU,
-                                        nbreak = nbreak, p01 = p01, p02 = p02, 
-                                        j_max = j_max,
-                                        k_max = k_max, quadpoint = quadpoint, 
-                                        maxiter = maxiter,
-                                        beta0init = beta0init, beta1init = beta1init,
-                                        sigmainit = sigmainit, thetainit = thetainit, 
-                                        sigmadinit = sigmadinit,
-                                        gammainit = gammainit,
-                                        survVar = survVar,
-                                        conversigmad = conversigmad,
-                                        mc.cores = ncores)
-    
-    ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = ncolM))
-    ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ]
-    
-    FrowPara <- nrow(ParaMatrix)
-    u <- FrowPara
-    t <- sim
-    
-    while (u < sim && t < Fsim) {
-      nncores <- min((sim - u), ncores)
-      ParaMatrixRaw <- parallel::mclapply((t+1):(t + sim - u), bootsfit, 
-                                          Data = a, 
+
+    if (out.bs == TRUE) {
+      ParaMatrixRaw <- parallel::mclapply(1:sim, bootsfit, Data = a, 
                                           nycol = nycol, nccol = nccol, 
                                           sigmau_inv = sigmau_invinit, 
                                           tbtheta = bthetainit, tL = tL, tU = tU,
@@ -211,75 +204,186 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
                                           gammainit = gammainit,
                                           survVar = survVar,
                                           conversigmad = conversigmad,
-                                          mc.cores = nncores)
+                                          out.bs = out.bs,
+                                          mc.cores = ncores)
       
-      SubParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = ncolM))
-      
-      if (sum(is.na(SubParaMatrix)) == nrow(SubParaMatrix)*ncolM) {
-        FrowPara <- 0
-        u <- u + FrowPara
-        t <- t + sim - u
-      } else if (nrow(SubParaMatrix) == 1) {
-        FrowPara <- 1
-        u <- u + FrowPara
-        t <- t + sim - u
-        ParaMatrix <- rbind(ParaMatrix, SubParaMatrix)
-      } else {
-        SubParaMatrix <- SubParaMatrix[complete.cases(SubParaMatrix), ]
-        FrowPara <- nrow(SubParaMatrix)
-        u <- u + FrowPara
-        t <- t + sim - u
-        ParaMatrix <- rbind(ParaMatrix, SubParaMatrix)
+      count <- 0
+      ParaMatrix <- NULL
+      BHMatrix <- NULL
+      for (i in 1:length(ParaMatrixRaw)) {
+        if (!is.na(ParaMatrixRaw[i][[1]]$coef1[1])) {
+          count <- count + 1
+          subParaMatrix <- ParaMatrixRaw[i][[1]]$coef1
+          ParaMatrix <- rbind(ParaMatrix, subParaMatrix)
+          subBHMatrix <- cbind(ParaMatrixRaw[i][[1]]$coef2, count)
+          BHMatrix <- rbind(BHMatrix, subBHMatrix)
+        }
       }
-    }
-    ParaMatrix <- as.data.frame(ParaMatrix)
-    
-    ## name the parameters
-    pp = 1
-    for (t in 1:j_max) {
-      for (u in 1:p_max) {
-        colnames(ParaMatrix)[pp] <- paste0("beta0_", t, u)
+      
+      FrowPara <- nrow(ParaMatrix)
+      u <- FrowPara
+      t <- sim
+      
+      while (u < sim && t < Fsim) {
+        nncores <- min((sim - u), ncores)
+        ParaMatrixRaw <- parallel::mclapply((t+1):(t + sim - u), bootsfit, 
+                                            Data = a, 
+                                            nycol = nycol, nccol = nccol, 
+                                            sigmau_inv = sigmau_invinit, 
+                                            tbtheta = bthetainit, tL = tL, tU = tU,
+                                            nbreak = nbreak, p01 = p01, p02 = p02, 
+                                            j_max = j_max,
+                                            k_max = k_max, quadpoint = quadpoint, 
+                                            maxiter = maxiter,
+                                            beta0init = beta0init, beta1init = beta1init,
+                                            sigmainit = sigmainit, thetainit = thetainit, 
+                                            sigmadinit = sigmadinit,
+                                            gammainit = gammainit,
+                                            survVar = survVar,
+                                            conversigmad = conversigmad,
+                                            out.bs = out.bs,
+                                            mc.cores = nncores)
+        
+        subcount <- 0
+        
+        for (i in 1:length(ParaMatrixRaw)) {
+          if (!is.na(ParaMatrixRaw[i][[1]]$coef1[1])) {
+            count <- count + 1
+            subcount <- subcount + 1
+            subParaMatrix <- ParaMatrixRaw[i][[1]]$coef1
+            ParaMatrix <- rbind(ParaMatrix, subParaMatrix)
+            subBHMatrix <- cbind(ParaMatrixRaw[i][[1]]$coef2, count)
+            BHMatrix <- rbind(BHMatrix, subBHMatrix)
+          }
+        }
+        
+        if (subcount == 0) {
+          FrowPara <- 0
+          u <- u + FrowPara
+          t <- t + sim - u
+        } else {
+          FrowPara <- subcount
+          u <- u + FrowPara
+          t <- t + sim - u
+        }
+      }
+      ParaMatrix <- as.data.frame(ParaMatrix)
+      BHMatrix <- as.data.frame(BHMatrix)
+      BHMatrix <- BHMatrix[, -2]
+      a <- list(ParaMatrix, BHMatrix)
+      names(a) <- c("ParaMatrix", "BHMatrix")
+      return(a)
+    } else {
+      ParaMatrixRaw <- parallel::mclapply(1:sim, bootsfit, Data = a, 
+                                          nycol = nycol, nccol = nccol, 
+                                          sigmau_inv = sigmau_invinit, 
+                                          tbtheta = bthetainit, tL = tL, tU = tU,
+                                          nbreak = nbreak, p01 = p01, p02 = p02, 
+                                          j_max = j_max,
+                                          k_max = k_max, quadpoint = quadpoint, 
+                                          maxiter = maxiter,
+                                          beta0init = beta0init, beta1init = beta1init,
+                                          sigmainit = sigmainit, thetainit = thetainit, 
+                                          sigmadinit = sigmadinit,
+                                          gammainit = gammainit,
+                                          survVar = survVar,
+                                          conversigmad = conversigmad,
+                                          mc.cores = ncores)
+      
+      
+      ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = ncolM))
+      ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ]
+      
+      FrowPara <- nrow(ParaMatrix)
+      u <- FrowPara
+      t <- sim
+      
+      while (u < sim && t < Fsim) {
+        nncores <- min((sim - u), ncores)
+        ParaMatrixRaw <- parallel::mclapply((t+1):(t + sim - u), bootsfit, 
+                                            Data = a, 
+                                            nycol = nycol, nccol = nccol, 
+                                            sigmau_inv = sigmau_invinit, 
+                                            tbtheta = bthetainit, tL = tL, tU = tU,
+                                            nbreak = nbreak, p01 = p01, p02 = p02, 
+                                            j_max = j_max,
+                                            k_max = k_max, quadpoint = quadpoint, 
+                                            maxiter = maxiter,
+                                            beta0init = beta0init, beta1init = beta1init,
+                                            sigmainit = sigmainit, thetainit = thetainit, 
+                                            sigmadinit = sigmadinit,
+                                            gammainit = gammainit,
+                                            survVar = survVar,
+                                            conversigmad = conversigmad,
+                                            mc.cores = nncores)
+        
+        SubParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = ncolM))
+        
+        if (sum(is.na(SubParaMatrix)) == nrow(SubParaMatrix)*ncolM) {
+          FrowPara <- 0
+          u <- u + FrowPara
+          t <- t + sim - u
+        } else if (nrow(SubParaMatrix) == 1) {
+          FrowPara <- 1
+          u <- u + FrowPara
+          t <- t + sim - u
+          ParaMatrix <- rbind(ParaMatrix, SubParaMatrix)
+        } else {
+          SubParaMatrix <- SubParaMatrix[complete.cases(SubParaMatrix), ]
+          FrowPara <- nrow(SubParaMatrix)
+          u <- u + FrowPara
+          t <- t + sim - u
+          ParaMatrix <- rbind(ParaMatrix, SubParaMatrix)
+        }
+      }
+      ParaMatrix <- as.data.frame(ParaMatrix)
+      
+      ## name the parameters
+      pp = 1
+      for (t in 1:j_max) {
+        for (u in 1:p_max) {
+          colnames(ParaMatrix)[pp] <- paste0("beta0_", t, u)
+          pp = pp+1
+        }
+      }
+      
+      for (t in 1:j_max) {
+        colnames(ParaMatrix)[pp] <- paste0("beta1_", t)
         pp = pp+1
       }
-    }
-    
-    for (t in 1:j_max) {
-      colnames(ParaMatrix)[pp] <- paste0("beta1_", t)
-      pp = pp+1
-    }
-    
-    for (t in 1:j_max) {
-      colnames(ParaMatrix)[pp] <- paste0("sigma2_", t)
-      pp = pp+1
-    }
-    
-    for (t in 1:q_b) {
-      colnames(ParaMatrix)[pp] <- paste0("theta_", t)
-      pp = pp+1
-    }
-    
-    for (t in 1:k_max) {
-      colnames(ParaMatrix)[pp] <- paste0("sigmad_", t)
-      pp = pp+1
-    }
-    
-    for (t in 1:q_eta) {
-      colnames(ParaMatrix)[pp] <- paste0("eta_", t)
-      pp = pp+1
-    }
-    
-    for (t in 1:k_max) {
-      for (u in 1:q_b) {
-        colnames(ParaMatrix)[pp] <- paste0("btheta_", u, t)
+      
+      for (t in 1:j_max) {
+        colnames(ParaMatrix)[pp] <- paste0("sigma2_", t)
         pp = pp+1
       }
-    }
-    colnames(ParaMatrix)[pp] <- "gamma"
+      
+      for (t in 1:q_b) {
+        colnames(ParaMatrix)[pp] <- paste0("theta_", t)
+        pp = pp+1
+      }
+      
+      for (t in 1:k_max) {
+        colnames(ParaMatrix)[pp] <- paste0("sigmad_", t)
+        pp = pp+1
+      }
+      
+      for (t in 1:q_eta) {
+        colnames(ParaMatrix)[pp] <- paste0("eta_", t)
+        pp = pp+1
+      }
+      
+      for (t in 1:k_max) {
+        for (u in 1:q_b) {
+          colnames(ParaMatrix)[pp] <- paste0("btheta_", u, t)
+          pp = pp+1
+        }
+      }
+      colnames(ParaMatrix)[pp] <- "gamma"
+      a <- list(ParaMatrix, BHMatrix)
+      names(a) <- c("ParaMatrix", "BHMatrix")
+      return(a)
+      }
     
   }
-  
-  return(ParaMatrix)
-  
-  
   
 }

@@ -6,6 +6,7 @@
 #include "jmspline.hpp"
 #include "bootsdata.hpp"
 #include "Simdata.hpp"
+#include "getfitted.hpp"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -126,6 +127,35 @@ Rcpp::List  Simdata_main(SEXP n, SEXP sim, SEXP nbreak, SEXP tL, SEXP tU, SEXP q
                                          as<double> (tgamma),
                                          as<double> (lambda0)
                                          );
+    if(Rf_isNull(result)){
+      throw std::range_error("Possible files reading or format errors");
+    }
+    return result;
+  } catch(std::exception &ex) {
+    forward_exception_to_r(ex);
+  } catch(...) {
+    ::Rf_error("c++ exception (unknown reason)");
+  }
+  return R_NilValue;             // not reached
+  
+}
+
+// [[Rcpp::export]]
+Rcpp::List  getfitted_main(SEXP tL, SEXP tU, SEXP nbreak, SEXP k_max, SEXP j_max, SEXP p01, SEXP p02, 
+                           SEXP sigmau_invnew, SEXP thetanew, SEXP bthetanew, SEXP beta0new, SEXP beta1new)
+{
+  Rcpp::List result;
+  try {
+    
+    result=getfittedspace::getfitted_cmain(as<double> (tL), as<double> (tU), 
+                                       as<int> (nbreak), as<int> (k_max), 
+                                       as<int>(j_max), as<int>(p01), as<int>(p02),
+                                       as<std::string> (sigmau_invnew),
+                                       as<std::string> (thetanew),
+                                       as<std::string> (bthetanew),
+                                       as<std::string> (beta0new),
+                                       as<std::string> (beta1new)
+    );
     if(Rf_isNull(result)){
       throw std::range_error("Possible files reading or format errors");
     }

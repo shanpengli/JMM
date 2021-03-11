@@ -2530,6 +2530,7 @@ int GetE(
         ret["btheta_matrix"] = btheta_matrix;
         ret["gamma"] = gamma;
         ret["BaselineHazard"] = BaselineHazard;
+        ret["NumEventTime"] = a;
         ret["FUNA_matrix"] = FUNA_matrix;
         ret["iter"] = iter;
         ret["loglike"] = loglike;
