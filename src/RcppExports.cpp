@@ -103,8 +103,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // getfitted_main
-Rcpp::List getfitted_main(SEXP tL, SEXP tU, SEXP nbreak, SEXP k_max, SEXP j_max, SEXP p01, SEXP p02, SEXP sigmau_invnew, SEXP thetanew, SEXP bthetanew, SEXP beta0new, SEXP beta1new);
-RcppExport SEXP _JMM_getfitted_main(SEXP tLSEXP, SEXP tUSEXP, SEXP nbreakSEXP, SEXP k_maxSEXP, SEXP j_maxSEXP, SEXP p01SEXP, SEXP p02SEXP, SEXP sigmau_invnewSEXP, SEXP thetanewSEXP, SEXP bthetanewSEXP, SEXP beta0newSEXP, SEXP beta1newSEXP) {
+Rcpp::List getfitted_main(SEXP tL, SEXP tU, SEXP nbreak, SEXP k_max, SEXP j_max, SEXP p01, SEXP p02, SEXP sigmau_invnew, SEXP thetanew, SEXP bthetanew, SEXP beta0new, SEXP beta1new, SEXP longvarnew);
+RcppExport SEXP _JMM_getfitted_main(SEXP tLSEXP, SEXP tUSEXP, SEXP nbreakSEXP, SEXP k_maxSEXP, SEXP j_maxSEXP, SEXP p01SEXP, SEXP p02SEXP, SEXP sigmau_invnewSEXP, SEXP thetanewSEXP, SEXP bthetanewSEXP, SEXP beta0newSEXP, SEXP beta1newSEXP, SEXP longvarnewSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -120,7 +120,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type bthetanew(bthetanewSEXP);
     Rcpp::traits::input_parameter< SEXP >::type beta0new(beta0newSEXP);
     Rcpp::traits::input_parameter< SEXP >::type beta1new(beta1newSEXP);
-    rcpp_result_gen = Rcpp::wrap(getfitted_main(tL, tU, nbreak, k_max, j_max, p01, p02, sigmau_invnew, thetanew, bthetanew, beta0new, beta1new));
+    Rcpp::traits::input_parameter< SEXP >::type longvarnew(longvarnewSEXP);
+    rcpp_result_gen = Rcpp::wrap(getfitted_main(tL, tU, nbreak, k_max, j_max, p01, p02, sigmau_invnew, thetanew, bthetanew, beta0new, beta1new, longvarnew));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -129,7 +130,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_JMM_jmspline_main", (DL_FUNC) &_JMM_jmspline_main, 30},
     {"_JMM_bootsdata_main", (DL_FUNC) &_JMM_bootsdata_main, 13},
     {"_JMM_Simdata_main", (DL_FUNC) &_JMM_Simdata_main, 24},
-    {"_JMM_getfitted_main", (DL_FUNC) &_JMM_getfitted_main, 12},
+    {"_JMM_getfitted_main", (DL_FUNC) &_JMM_getfitted_main, 13},
     {NULL, NULL, 0}
 };
 

@@ -27,7 +27,8 @@ Rcpp::List getfitted_cmain(double tL, double tU, int nbreak, int k_max, int j_ma
                            std::string thetanew, 
                            std::string bthetanew,
                            std::string beta0new,
-                           std::string beta1new);
+                           std::string beta1new,
+                           std::string longvarnew);
 
 }
 

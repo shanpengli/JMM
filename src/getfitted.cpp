@@ -37,7 +37,8 @@ namespace getfittedspace {
                                std::string thetanew, 
                                std::string bthetanew,
                                std::string beta0new,
-                               std::string beta1new)
+                               std::string beta1new,
+                               std::string longvarnew)
     {
       int k_cubic = 4;
       int q_b=k_cubic+nbreak-2;
@@ -207,6 +208,38 @@ namespace getfittedspace {
           }
       }
       
+      /* read longvar matrix*/
+      gsl_matrix *longvarmatrix=gsl_matrix_alloc(j_max,p_max);
+      {
+        FILE * f = fopen(longvarnew.c_str(), "r");
+        
+        if (f == NULL)
+        {
+          Rprintf("File %s does not exist.\n", longvarnew.c_str());
+          return R_NilValue;
+        }
+        
+        
+        int nrows=0;
+        // Extract characters from file and store in character c
+        for (char c = fgetc(f); c != EOF; c = fgetc(f))
+          if (c == '\n')  nrows = nrows + 1;
+          nrows=nrows+1;
+          if (j_max == nrows)
+          {   rewind(f);
+            gsl_matrix_fscanf(f, longvarmatrix);
+            fclose(f);
+          }
+          else
+          {
+            Rprintf("Input oberservations is %d, but the number of rows in %s is %d",
+                    j_max,
+                    longvarnew.c_str(),nrows);
+            fclose(f);
+            return R_NilValue;
+          }
+      }
+      
       double stepsize=0.01;
       int nstep=(tU-tL)/stepsize+1;
       double timex;
@@ -222,7 +255,8 @@ namespace getfittedspace {
       /** output the estimates  ***/
       NumericMatrix fittedvalue_matrix(nstep, 3 + k_max);
       
-      int i,k;
+      int i,k,j;
+      double sum=0;
       for(i=0;i<nstep;i++)
       {
         timex=(double)i*stepsize+tL;
@@ -231,9 +265,12 @@ namespace getfittedspace {
         MulM(sigmau_inv,helpb,B_spl);
         
         fittedvalue_matrix(i, 0) = timex;
-        fittedvalue_matrix(i, 1) = -0.016833*57.2647033+MulVV(theta,B_spl);
-        fittedvalue_matrix(i, 2) = -0.013495*57.2647033+0.834474*MulVV(theta,B_spl);
-        
+        for (j=0;j<p01;j++) sum = sum + gsl_matrix_get(beta0, 0, j)*gsl_matrix_get(longvarmatrix, 0, j);
+        fittedvalue_matrix(i, 1) = sum+MulVV(theta,B_spl)*gsl_vector_get(beta1, 0);
+        sum = 0;
+        for (j=0;j<p02;j++) sum = sum + gsl_matrix_get(beta0, 1, j)*gsl_matrix_get(longvarmatrix, 1, j);
+        fittedvalue_matrix(i, 2) = sum+gsl_vector_get(beta1, 1)*MulVV(theta,B_spl);
+        sum = 0;
         
         for(k=0;k<k_max;k++)
         {

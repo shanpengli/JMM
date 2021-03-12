@@ -142,7 +142,8 @@ Rcpp::List  Simdata_main(SEXP n, SEXP sim, SEXP nbreak, SEXP tL, SEXP tU, SEXP q
 
 // [[Rcpp::export]]
 Rcpp::List  getfitted_main(SEXP tL, SEXP tU, SEXP nbreak, SEXP k_max, SEXP j_max, SEXP p01, SEXP p02, 
-                           SEXP sigmau_invnew, SEXP thetanew, SEXP bthetanew, SEXP beta0new, SEXP beta1new)
+                           SEXP sigmau_invnew, SEXP thetanew, SEXP bthetanew, SEXP beta0new, SEXP beta1new, 
+                           SEXP longvarnew)
 {
   Rcpp::List result;
   try {
@@ -154,7 +155,8 @@ Rcpp::List  getfitted_main(SEXP tL, SEXP tU, SEXP nbreak, SEXP k_max, SEXP j_max
                                        as<std::string> (thetanew),
                                        as<std::string> (bthetanew),
                                        as<std::string> (beta0new),
-                                       as<std::string> (beta1new)
+                                       as<std::string> (beta1new),
+                                       as<std::string> (longvarnew)
     );
     if(Rf_isNull(result)){
       throw std::range_error("Possible files reading or format errors");

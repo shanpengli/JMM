@@ -13,7 +13,7 @@ Simdata_main <- function(n, sim, nbreak, tL, tU, q_eta, j_max, p01, p02, t_max, 
     .Call(`_JMM_Simdata_main`, n, sim, nbreak, tL, tU, q_eta, j_max, p01, p02, t_max, distr, m_age, std_age, k_max, tbthetanew, sigmau_invnew, tbeta0new, tbeta1new, tsigmanew, tthetanew, tsigmadnew, tetanew, tgamma, lambda0)
 }
 
-getfitted_main <- function(tL, tU, nbreak, k_max, j_max, p01, p02, sigmau_invnew, thetanew, bthetanew, beta0new, beta1new) {
-    .Call(`_JMM_getfitted_main`, tL, tU, nbreak, k_max, j_max, p01, p02, sigmau_invnew, thetanew, bthetanew, beta0new, beta1new)
+getfitted_main <- function(tL, tU, nbreak, k_max, j_max, p01, p02, sigmau_invnew, thetanew, bthetanew, beta0new, beta1new, longvarnew) {
+    .Call(`_JMM_getfitted_main`, tL, tU, nbreak, k_max, j_max, p01, p02, sigmau_invnew, thetanew, bthetanew, beta0new, beta1new, longvarnew)
 }
 
