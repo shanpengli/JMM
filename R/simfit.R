@@ -35,7 +35,7 @@
 ##' @param gammainit Initial values of gamma.
 ##' @param survVar logical; TRUE if the survival sub-model include covariates. Default is FALSE. 
 ##' @param lambda0 true baseline hazard.
-##' @param out.bs logical; TRUE if output baseline hazard only. Default is FALSE.
+##' @param out.bs logical; TRUE if output baseline hazard. Default is FALSE.
 ##' @param conversigmad logical; TRUE if sigmad is considered into convergence criteria. Default is FALSE.
 ##' @param ncores number of cores to proceed parallel computation.
 ##' @export
@@ -181,9 +181,11 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
       
     }
     ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ]
-    if (out.bs == TRUE) BHMatrix <- BHMatrix[, -2]
+    if (out.bs == TRUE) {
+      BHMatrix <- BHMatrix[, -2]
+      BHMatrix <- as.data.frame(BHMatrix)
+    }
     ParaMatrix <- as.data.frame(ParaMatrix)
-    BHMatrix <- as.data.frame(BHMatrix)
     a <- list(ParaMatrix, BHMatrix)
     names(a) <- c("ParaMatrix", "BHMatrix")
     return(a)

@@ -115,7 +115,7 @@ Simfit(
 
 \item{lambda0}{true baseline hazard.}
 
-\item{out.bs}{logical; TRUE if output baseline hazard only. Default is FALSE.}
+\item{out.bs}{logical; TRUE if output baseline hazard. Default is FALSE.}
 
 \item{conversigmad}{logical; TRUE if sigmad is considered into convergence criteria. Default is FALSE.}
 
