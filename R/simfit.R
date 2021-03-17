@@ -182,7 +182,8 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
     }
     ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ]
     if (out.bs == TRUE) BHMatrix <- BHMatrix[, -2]
-    
+    ParaMatrix <- as.data.frame(ParaMatrix)
+    BHMatrix <- as.data.frame(BHMatrix)
     a <- list(ParaMatrix, BHMatrix)
     names(a) <- c("ParaMatrix", "BHMatrix")
     return(a)
