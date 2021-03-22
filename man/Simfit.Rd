@@ -128,3 +128,6 @@ Simfit(
 \description{
 Simulation results
 }
+\seealso{
+\code{\link{SimData}, \link{jmspline}}
+}

@@ -1,5 +1,5 @@
-##' Joint modeling of longitudinal continuous and survival data
-##' @title Joint Modelling for Continuous outcomes
+##' A Flexible Joint Model for Multiple Longitudinal Biomarkers and A Time-to-Event Outcome
+##' @title A Flexible Joint Model for Multiple Longitudinal Biomarkers and A Time-to-Event Outcome
 ##' @param ydata a multibiomarker longitudinal data frame in long format.
 ##' @param cdata a survival data frame with single failure.
 ##' Each subject has one data entry.
@@ -24,6 +24,43 @@
 ##' @param gammainit Initial values of gamma.
 ##' @param survVar logical; TRUE if the survival sub-model include covariates. Default is TRUE.
 ##' @param conversigmad logical; TRUE if sigmad is considered into convergence criteria. Default is FALSE.
+#' @return Object of class \code{JMM} with elements
+##'   \tabular{ll}{
+##'       \code{ydata}    \tab  a data frame of inputted longitudinal data with multiple biomarkers. \cr
+##'       \code{cdata} \tab a data frame of inputted survival data. \cr
+##'       \code{N1} \tab a vector containing the number of repeated measurements for all subjects. \cr
+##'       \code{beta0_matrix} \tab  a matrix of point estimates of \eqn{\beta_0}. \cr
+##'       \code{beta1_estimate}   \tab  a vector of point estimates of \eqn{\beta_1}. \cr
+##'       \code{sigma2_estimate} \tab a vector of point estimates of \eqn{\sigma^2} for each biomarker. \cr
+##'       \code{theta_estimate}    \tab a vector of point estimates of \eqn{\theta}. \cr
+##'       \code{sigmad_estimate}     \tab  a vector of point estimates of \eqn{\sigma_d^2}, i.e., the diagonal elements of the variance-covariance matrix of random effects.\cr
+##'       \code{eta_estimate}     \tab  a vector of The point estimates of survival fixed effects \eqn{\eta}.\cr
+##'       \code{btheta_matrix}     \tab a matrix of point estimates of \eqn{\Theta}.\cr
+##'       \code{gamma}     \tab the association parameter \eqn{\gamma}. \cr
+##'       \code{BaselineHazard}     \tab a matrix of baseline hazard. The first row denotes a distinct survival time, 
+##'       the second row denotes the number of events, and the third row denotes the hazard rate on the corresponding survival time.\cr
+##'       \code{FUNA_matrix}     \tab a matrix of expected value of random effects \eqn{\alpha}. \cr
+##'       \code{iter} \tab 	the number of iterations in the EM algorithm. \cr
+##'       \code{loglike} \tab 	the log-likelihood value. \cr
+##'       \code{AIC} \tab 	the AIC value. \cr
+##'       \code{TotalPara} \tab 	the total number of parameters of the model fit. \cr
+##'       \code{SurvivalVar} \tab 	an identifier of whether survival covariates are considered in the joint model. 
+##'       1 corresponds to yes whereas 0 to no. \cr
+##'       \code{type} \tab 	object identifier. \cr
+##'       \code{quadpoint} \tab 	the number of standard Gaussian Hermite quadrature points used for the E step. \cr
+##'       \code{n} \tab 	total number of subjects. \cr
+##'       \code{n1} \tab 	total number of observations. \cr
+##'       \code{sigma_inv} \tab 	a matrix of \eqn{\Sigma^{-1}}. \cr
+##'       \code{tbtheta} \tab 	a matrix of inputted \eqn{\Theta}. \cr
+##'       \code{tL} \tab 	lower limit of time for spline basis. \cr
+##'       \code{tU} \tab 	upper limit of time for spline basis. \cr
+##'       \code{p01} \tab the number of longitudinal fixed effects for the first biomarker. \cr
+##'       \code{p02} \tab the number of longitudinal fixed effects for the second biomarker. \cr
+##'       \code{nbreak} \tab 	the number of knots used for spline basis. \cr
+##'       \code{j_max} \tab 	total number of biomarkers in the longitudinal data. \cr
+##'       \code{k_max} \tab 	total number of random effects. \cr
+##'       
+##'   }
 ##' @examples
 ##'
 ##' require(JMM)
@@ -55,6 +92,11 @@
 ##'                 j_max = 2, beta0init = tbeta0, beta1init = tbeta1, sigmainit = tsigma,
 ##'                 thetainit = ttheta, sigmadinit = tsigmad, gammainit = tgamma,
 ##'                 survVar = FALSE, conversigmad = TRUE)
+##' }
+##' @references
+##' \itemize{
+##' \item Ning Li, Yi Liu, Shanpeng Li, Robert M. Elashoff, and Gang Li. "A Flexible Joint Model for Multiple Longitudinal Biomarkers and A Time-to-Event Outcome: 
+##' With Applications to Dynamic Prediction Using Highly Correlated Biomarkers." Biometrical Journal (Accepted).
 ##' }
 ##' @seealso \code{\link{SimData}}
 ##' @export

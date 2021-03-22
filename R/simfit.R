@@ -38,6 +38,7 @@
 ##' @param out.bs logical; TRUE if output baseline hazard. Default is FALSE.
 ##' @param conversigmad logical; TRUE if sigmad is considered into convergence criteria. Default is FALSE.
 ##' @param ncores number of cores to proceed parallel computation.
+##' @seealso \code{\link{SimData}, \link{jmspline}}
 ##' @export
 ##'
 
