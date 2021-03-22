@@ -31,3 +31,6 @@ all bootstrap samples will be returned.}
 \description{
 Standard error estimates by bootstrap sampling
 }
+\seealso{
+\code{\link{jmspline}}
+}

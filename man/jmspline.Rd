@@ -81,3 +81,39 @@ Each subject has one data entry.}
 \description{
 Joint modeling of longitudinal continuous and survival data
 }
+\examples{
+
+require(JMM)
+## load supporting data for data generation and model fit 
+data(simdata)
+tbeta0 <- as.data.frame(matrix(c(-0.4, -0.3), nrow = 2))
+tbeta1 <- as.data.frame(c(1, 0.8))
+tsigma <- as.data.frame(c(1, 1))
+tsigmad <- as.data.frame(c(2, 1))
+ttheta <- as.data.frame(c(5, 0.148183, -1.606910, 1.083067, -1.788186, -1.205329,
+                          0.245283, -1.433481, -0.603650, -0.134991))
+teta <- as.data.frame(c(0))
+tgamma <- 0.5
+tL <- 0
+tU <- 9
+## generate a simulated data
+Data <- SimData(sim = 1, n = 215, tL = tL, tU = tU, nbreak = 8, p01 = 1, p02 = 1,
+q_eta = 1, t_max = 19, k_max = 2, distr = "Gaussian", m_age = 0,
+std_age = 2, sigmau_inv = sigmau_inv, tbtheta = tbtheta, 
+tbeta0 = tbeta0, tbeta1 = tbeta1, tsigma = tsigma, tsigmad = tsigmad,
+ttheta = ttheta, teta = teta, tgamma = tgamma)
+ydata <- as.data.frame(Data$ydata_0)
+cdata <- as.data.frame(Data$cdata_0)
+mdata <- as.data.frame(Data$mdata_0)
+\donttest{
+## fit a joint model
+fit <- jmspline(ydata = ydata, cdata = cdata, mdata = mdata, sigmau_inv = sigmau_inv, 
+                tbtheta = btheta, tL = tL, tU = tU, nbreak = 8, p01 = 1, p02 = 1, 
+                j_max = 2, beta0init = tbeta0, beta1init = tbeta1, sigmainit = tsigma,
+                thetainit = ttheta, sigmadinit = tsigmad, gammainit = tgamma,
+                survVar = FALSE, conversigmad = TRUE)
+}
+}
+\seealso{
+\code{\link{SimData}}
+}

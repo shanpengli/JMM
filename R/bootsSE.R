@@ -7,6 +7,7 @@
 ##' @param maxiter number of iterations for EM algorithm. Default is 1000.
 ##' @param ncores number of cores to proceed parallel computation.
 ##' @param quadpoint number of Gauss-Hermite quadrature points used for numerical integration. 
+##' @seealso \code{\link{jmspline}}
 ##' @export
 ##'
 
@@ -61,6 +62,7 @@ bootsSE <- function(object, nboots = 100, print.bootspara = TRUE, maxiter = 1000
   nccol <- dim(object$cdata)[2]
   
   ## Initialize the parameter estimates
+  ## Need to change as parameter estimates
   tbeta0 <- as.data.frame(matrix(c(-0.01, -0.02), nrow = 2, ncol = 1))
   tbeta1 <- as.data.frame(c(1, 1.26))
   tsigma2 <- as.data.frame(c(3.2, 4.2))
@@ -170,21 +172,38 @@ bootsSE <- function(object, nboots = 100, print.bootspara = TRUE, maxiter = 1000
     ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ] 
     
   } else {
-    ParaMatrixRaw <- parallel::mclapply(1:nboots, bootsfit, Data = Data, 
-                                        nycol = nycol, nccol = nccol, 
-                                        sigmau_inv = sigmau_inv, 
-                                        tbtheta = tbtheta, tL = tL, tU = tU,
-                                        nbreak = nbreak, p01 = p01, p02 = p02, 
-                                        j_max = j_max,
-                                        k_max = k_max, quadpoint = quadpoint, 
-                                        maxiter = maxiter,
-                                        beta0init = tbeta0, beta1init = tbeta1,
-                                        sigmainit = tsigma2, thetainit = ttheta, 
-                                        sigmadinit = tsigmad,
-                                        gammainit = tgamma,
-                                        survVar = TRUE,
-                                        conversigmad = FALSE,
-                                        mc.cores = ncores)
+    # ParaMatrixRaw <- parallel::mclapply(1:nboots, bootsfit, Data = Data, 
+    #                                     nycol = nycol, nccol = nccol, 
+    #                                     sigmau_inv = sigmau_inv, 
+    #                                     tbtheta = tbtheta, tL = tL, tU = tU,
+    #                                     nbreak = nbreak, p01 = p01, p02 = p02, 
+    #                                     j_max = j_max,
+    #                                     k_max = k_max, quadpoint = quadpoint, 
+    #                                     maxiter = maxiter,
+    #                                     beta0init = tbeta0, beta1init = tbeta1,
+    #                                     sigmainit = tsigma2, thetainit = ttheta, 
+    #                                     sigmadinit = tsigmad,
+    #                                     gammainit = tgamma,
+    #                                     survVar = TRUE,
+    #                                     conversigmad = FALSE,
+    #                                     mc.cores = ncores)
+    
+    cl <- parallel::makeCluster(ncores)
+    ParaMatrixRaw <- parallel::parLapply(cl, 1:nboots, bootsfit, Data = Data, 
+                                         nycol = nycol, nccol = nccol, 
+                                         sigmau_inv = sigmau_inv, 
+                                         tbtheta = tbtheta, tL = tL, tU = tU,
+                                         nbreak = nbreak, p01 = p01, p02 = p02, 
+                                         j_max = j_max,
+                                         k_max = k_max, quadpoint = quadpoint, 
+                                         maxiter = maxiter,
+                                         beta0init = tbeta0, beta1init = tbeta1,
+                                         sigmainit = tsigma2, thetainit = ttheta, 
+                                         sigmadinit = tsigmad,
+                                         gammainit = tgamma,
+                                         survVar = TRUE,
+                                         conversigmad = FALSE)
+    parallel::stopCluster(cl)
     
     ParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (object$TotalPara + 1)))
     ParaMatrix <- ParaMatrix[complete.cases(ParaMatrix), ]
@@ -195,22 +214,40 @@ bootsSE <- function(object, nboots = 100, print.bootspara = TRUE, maxiter = 1000
     
     while (u < nboots && t < Fnboots) {
       nncores <- min((nboots - u), ncores)
-      ParaMatrixRaw <- parallel::mclapply((t+1):(t + nboots - u), bootsfit, 
-                                          Data = Data, 
-                                          nycol = nycol, nccol = nccol, 
-                                          sigmau_inv = sigmau_inv, 
-                                          tbtheta = tbtheta, tL = tL, tU = tU,
-                                          nbreak = nbreak, p01 = p01, p02 = p02, 
-                                          j_max = j_max,
-                                          k_max = k_max, quadpoint = quadpoint, 
-                                          maxiter = maxiter,
-                                          beta0init = tbeta0, beta1init = tbeta1,
-                                          sigmainit = tsigma2, thetainit = ttheta, 
-                                          sigmadinit = tsigmad,
-                                          gammainit = tgamma,
-                                          survVar = TRUE,
-                                          conversigmad = FALSE,
-                                          mc.cores = nncores)
+      # ParaMatrixRaw <- parallel::mclapply((t+1):(t + nboots - u), bootsfit, 
+      #                                     Data = Data, 
+      #                                     nycol = nycol, nccol = nccol, 
+      #                                     sigmau_inv = sigmau_inv, 
+      #                                     tbtheta = tbtheta, tL = tL, tU = tU,
+      #                                     nbreak = nbreak, p01 = p01, p02 = p02, 
+      #                                     j_max = j_max,
+      #                                     k_max = k_max, quadpoint = quadpoint, 
+      #                                     maxiter = maxiter,
+      #                                     beta0init = tbeta0, beta1init = tbeta1,
+      #                                     sigmainit = tsigma2, thetainit = ttheta, 
+      #                                     sigmadinit = tsigmad,
+      #                                     gammainit = tgamma,
+      #                                     survVar = TRUE,
+      #                                     conversigmad = FALSE,
+      #                                     mc.cores = nncores)
+      
+      cl <- parallel::makeCluster(nncores)
+      ParaMatrixRaw <- parallel::parLapply(cl, (t+1):(t + nboots - u), bootsfit, 
+                                           Data = Data, 
+                                           nycol = nycol, nccol = nccol, 
+                                           sigmau_inv = sigmau_inv, 
+                                           tbtheta = tbtheta, tL = tL, tU = tU,
+                                           nbreak = nbreak, p01 = p01, p02 = p02, 
+                                           j_max = j_max,
+                                           k_max = k_max, quadpoint = quadpoint, 
+                                           maxiter = maxiter,
+                                           beta0init = tbeta0, beta1init = tbeta1,
+                                           sigmainit = tsigma2, thetainit = ttheta, 
+                                           sigmadinit = tsigmad,
+                                           gammainit = tgamma,
+                                           survVar = TRUE,
+                                           conversigmad = FALSE)
+      parallel::stopCluster(cl)
       
       SubParaMatrix <- t(matrix(unlist(ParaMatrixRaw), nrow = (object$TotalPara + 1)))
       
