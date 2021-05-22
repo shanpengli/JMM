@@ -72,7 +72,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
   k_cubic = 4
   p_max <- max(p01, p02)
   q_b <- k_cubic + nbreak - 2
-  ncolM <- j_max*p_max + 2*j_max + q_b + k_max + q_eta + k_max*q_b + 1
+  ncolM <- j_max*p_max + 2*j_max + q_b + k_max + q_eta + k_max*q_b + 1 + 1
   
   nycol <- dim(a$ydata_0)[2]
   nccol <- dim(a$cdata_0)[2]
@@ -102,9 +102,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
       
       if (fit$iter == maxiter) {
         ParaMatrix[i, ] <- NA
-      } else if (fit$loglike == -Inf) {
-        ParaMatrix[i, ] <- NA
-      } else {
+      }  else {
         Realsim <- Realsim + 1
         writeLines(paste0(Realsim, " th sample's parameter estimates is collected!"))
         
@@ -116,6 +114,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
         eta <- fit$eta_estimate
         btheta <- fit$btheta_matrix
         gamma <- fit$gamma
+        loglike <- fit$loglike
         
         ##ncolM <- j_max*p_max + 2*j_max + q_b + k_max + q_eta + k_max*q_b + 1
         pp = 1
@@ -167,6 +166,8 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
         
         ParaMatrix[i, pp] = gamma
         colnames(ParaMatrix)[pp] <- "gamma"
+        ParaMatrix[i, pp+1] = loglike
+        colnames(ParaMatrix)[pp+1] <- "loglike"
         
         
         ##output baselinehazard
@@ -212,7 +213,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
       #                                     mc.cores = ncores)
       
       cl <- parallel::makeCluster(ncores)
-      ParaMatrixRaw <- parallel::parLapply(cl, 1:sim, bootsfit, 
+      ParaMatrixRaw <- parallel::parLapply(cl, 1:sim, bootsfitSim, 
                                            Data = a, 
                                            nycol = nycol, nccol = nccol, 
                                            sigmau_inv = sigmau_invinit, 
@@ -268,7 +269,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
         #                                     mc.cores = nncores)
         # 
         cl <- parallel::makeCluster(nncores)
-        ParaMatrixRaw <- parallel::parLapply(cl, (t+1):(t + sim - u), bootsfit, 
+        ParaMatrixRaw <- parallel::parLapply(cl, (t+1):(t + sim - u), bootsfitSim, 
                                              Data = a, 
                                              nycol = nycol, nccol = nccol, 
                                              sigmau_inv = sigmau_invinit, 
@@ -333,7 +334,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
       #                                     mc.cores = ncores)
       
       cl <- parallel::makeCluster(ncores)
-      ParaMatrixRaw <- parallel::parLapply(cl, 1:sim, bootsfit, 
+      ParaMatrixRaw <- parallel::parLapply(cl, 1:sim, bootsfitSim, 
                                            Data = a, 
                                            nycol = nycol, nccol = nccol, 
                                            sigmau_inv = sigmau_invinit, 
@@ -378,7 +379,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
         #                                     mc.cores = nncores)
         
         cl <- parallel::makeCluster(nncores)
-        ParaMatrixRaw <- parallel::parLapply(cl, (t+1):(t + sim - u), bootsfit, 
+        ParaMatrixRaw <- parallel::parLapply(cl, (t+1):(t + sim - u), bootsfitSim, 
                                              Data = a, 
                                              nycol = nycol, nccol = nccol, 
                                              sigmau_inv = sigmau_invinit, 
@@ -457,6 +458,7 @@ Simfit <- function(sim = 100, n = 215, tL = 0, tU = 9,
         }
       }
       colnames(ParaMatrix)[pp] <- "gamma"
+      colnames(ParaMatrix)[pp+1] <- "loglike"
       a <- list(ParaMatrix, BHMatrix)
       names(a) <- c("ParaMatrix", "BHMatrix")
       return(a)
